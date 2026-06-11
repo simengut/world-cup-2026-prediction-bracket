@@ -7,6 +7,9 @@
     { key: "semifinals", label: "Semifinals" },
     { key: "final", label: "Final" },
   ];
+  const REQUIRED_MATCH_IDS = Object.values(DATA.rounds)
+    .flat()
+    .map((match) => String(match.id));
   const TOTAL_KNOCKOUT_PICKS = 31;
   const FLAG_BASE = "vendor/flags";
   const FLAG_CODES = {
@@ -157,6 +160,61 @@
       .sort();
   }
 
+  function completedPickCount() {
+    return REQUIRED_MATCH_IDS.filter(
+      (id) => state.picks[id] === "home" || state.picks[id] === "away",
+    ).length;
+  }
+
+  function submissionReadiness() {
+    const selectedThirds = selectedThirdCodes().length;
+    const pickCount = completedPickCount();
+    const displayName = els.displayNameInput.value.trim();
+
+    if (state.submitting) {
+      return { ready: false, message: "Submitting..." };
+    }
+
+    if (selectedThirds !== 8) {
+      return {
+        ready: false,
+        message:
+          selectedThirds < 8
+            ? `Select ${8 - selectedThirds} more best thirds`
+            : `Remove ${selectedThirds - 8} best thirds`,
+      };
+    }
+
+    if (pickCount !== TOTAL_KNOCKOUT_PICKS) {
+      return {
+        ready: false,
+        message: `Choose ${TOTAL_KNOCKOUT_PICKS - pickCount} more knockout ${
+          TOTAL_KNOCKOUT_PICKS - pickCount === 1 ? "game" : "games"
+        }`,
+      };
+    }
+
+    if (!displayName) {
+      return { ready: false, message: "Enter your name to submit" };
+    }
+
+    if (!backendAvailableHere()) {
+      return { ready: false, message: "Submit from the deployed Vercel site" };
+    }
+
+    return { ready: true, message: "Ready to submit" };
+  }
+
+  function updateSubmitState() {
+    const readiness = submissionReadiness();
+    els.submitPicksButton.disabled = !readiness.ready;
+    els.submitPicksButton.setAttribute(
+      "aria-disabled",
+      readiness.ready ? "false" : "true",
+    );
+    els.submitStatus.textContent = readiness.message;
+  }
+
   function thirdAssignment() {
     const codes = selectedThirdCodes();
     const selected = new Set(codes);
@@ -292,7 +350,7 @@
 
   function renderMetrics(bracket) {
     const selectedThirds = selectedThirdCodes().length;
-    const pickCount = Object.keys(state.picks).length;
+    const pickCount = completedPickCount();
     const finalMatch = bracket.matchesById["104"];
     const champion = finalMatch?.winner?.name || "Open";
     const metrics = [
@@ -533,6 +591,7 @@
     renderChampion(bracket);
     renderBracket(bracket);
     renderViews();
+    updateSubmitState();
   }
 
   function showToast(message) {
@@ -800,7 +859,8 @@
   async function submitPicks() {
     const displayName = els.displayNameInput.value.trim();
     const selectedThirds = selectedThirdCodes().length;
-    const pickCount = Object.keys(state.picks).length;
+    const pickCount = completedPickCount();
+    const readiness = submissionReadiness();
 
     if (!displayName) {
       showToast("Enter a name before submitting.");
@@ -824,9 +884,13 @@
       return;
     }
 
+    if (!readiness.ready) {
+      showToast(readiness.message);
+      return;
+    }
+
     state.submitting = true;
-    els.submitPicksButton.disabled = true;
-    els.submitStatus.textContent = "Submitting...";
+    updateSubmitState();
 
     try {
       const response = await fetch("/api/submissions", {
@@ -851,7 +915,9 @@
       showToast(error.message);
     } finally {
       state.submitting = false;
-      els.submitPicksButton.disabled = false;
+      const submitted = els.submitStatus.textContent === "Submitted";
+      updateSubmitState();
+      if (submitted) els.submitStatus.textContent = "Submitted";
     }
   }
 
@@ -914,6 +980,8 @@
     event.preventDefault();
     submitPicks();
   });
+
+  els.displayNameInput.addEventListener("input", updateSubmitState);
 
   els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
 
