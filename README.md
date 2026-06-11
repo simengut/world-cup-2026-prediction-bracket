@@ -22,6 +22,7 @@ The app includes Vercel Functions for submissions and leaderboard data:
 - `GET /api/leaderboard`
 
 Connect a Neon Postgres database through Vercel Marketplace so Vercel sets `DATABASE_URL` or `POSTGRES_URL`.
+The current Vercel project is connected to a Neon Free database resource named `neon-cyan-river`.
 
 Scoring is equal-weight by round: one point for each predicted team that is actually alive in that stage. Set actual results in a Vercel environment variable named `ACTUAL_RESULTS`:
 
