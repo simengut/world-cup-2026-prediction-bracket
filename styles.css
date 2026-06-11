@@ -477,6 +477,55 @@ h1 {
   margin-bottom: 0;
 }
 
+.public-view-bar {
+  display: flex;
+  min-height: 54px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  margin-bottom: 10px;
+  border: 1px solid rgba(224, 170, 63, 0.56);
+  border-radius: 8px;
+  background:
+    linear-gradient(90deg, rgba(224, 170, 63, 0.2), rgba(15, 111, 78, 0.08)),
+    #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.public-view-bar[hidden] {
+  display: none;
+}
+
+.public-view-bar span {
+  display: block;
+  color: #735211;
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.public-view-bar strong {
+  display: block;
+  margin-top: 3px;
+  font-size: 0.92rem;
+  line-height: 1.2;
+}
+
+.is-public-view label[for="excelInput"] {
+  border-color: rgba(24, 33, 31, 0.1);
+  background: #e6ece8;
+  color: #7a8984;
+  cursor: not-allowed;
+  opacity: 0.78;
+  box-shadow: none;
+  transform: none;
+}
+
+.is-public-view .entrant {
+  cursor: default;
+}
+
 .view-bar {
   min-height: 44px;
   margin-bottom: 10px;
@@ -903,7 +952,7 @@ h1 {
 }
 
 .pick-modal-card {
-  width: min(920px, 100%);
+  width: min(1080px, 100%);
   max-height: min(760px, calc(100vh - 48px));
   overflow: auto;
   border: 1px solid rgba(255, 255, 255, 0.32);
@@ -960,13 +1009,17 @@ h1 {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 14px;
+  padding: 16px 18px;
   border-bottom: 1px solid var(--line);
-  background: rgba(247, 251, 248, 0.96);
+  background:
+    linear-gradient(90deg, rgba(15, 111, 78, 0.1), rgba(224, 170, 63, 0.08)),
+    rgba(247, 251, 248, 0.97);
+  backdrop-filter: blur(14px);
 }
 
 .pick-modal-head span,
-.public-pick-summary span {
+.public-pick-hero span,
+.public-stat-grid span {
   display: block;
   color: var(--muted);
   font-size: 0.66rem;
@@ -976,22 +1029,23 @@ h1 {
 
 .pick-modal-head h2 {
   margin: 2px 0 0;
-  font-size: 1.2rem;
+  font-size: 1.35rem;
 }
 
 .pick-modal-body {
   display: grid;
-  gap: 12px;
+  gap: 14px;
   padding: 14px;
 }
 
-.public-pick-summary {
+.public-pick-hero {
   display: grid;
-  grid-template-columns: 1.4fr repeat(2, minmax(100px, 1fr));
-  gap: 8px;
+  grid-template-columns: minmax(280px, 1.35fr) minmax(260px, 0.9fr);
+  gap: 10px;
 }
 
-.public-pick-summary > div,
+.public-champion-card,
+.public-stat-grid > div,
 .public-pick-section,
 .public-group,
 .public-round {
@@ -1000,17 +1054,51 @@ h1 {
   background: #ffffff;
 }
 
-.public-pick-summary > div {
-  min-height: 64px;
-  padding: 10px;
+.public-champion-card {
+  display: grid;
+  min-height: 104px;
+  align-content: center;
+  padding: 16px;
+  overflow: hidden;
+  border-color: rgba(224, 170, 63, 0.56);
+  background:
+    linear-gradient(135deg, rgba(224, 170, 63, 0.22), rgba(15, 111, 78, 0.06)),
+    #ffffff;
 }
 
-.public-pick-summary strong {
+.public-champion-card strong {
   display: flex;
   align-items: center;
-  gap: 7px;
-  margin-top: 6px;
-  font-size: 0.95rem;
+  gap: 10px;
+  margin-top: 8px;
+  font-size: clamp(1.35rem, 2vw, 1.85rem);
+  line-height: 1.15;
+}
+
+.public-champion-card .team-flag,
+.public-champion-card .flag-placeholder {
+  width: 36px;
+  height: 25px;
+  border-radius: 6px;
+}
+
+.public-stat-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.public-stat-grid > div {
+  display: grid;
+  min-height: 104px;
+  align-content: center;
+  padding: 14px;
+}
+
+.public-stat-grid strong {
+  display: block;
+  margin-top: 7px;
+  font-size: 1.1rem;
   line-height: 1.15;
 }
 
@@ -1019,8 +1107,7 @@ h1 {
 }
 
 .public-pick-section > h3,
-.public-group h3,
-.public-round h3 {
+.public-group h3 {
   margin: 0 0 8px;
   color: var(--muted);
   font-size: 0.72rem;
@@ -1036,6 +1123,7 @@ h1 {
 
 .public-rounds-grid {
   grid-template-columns: repeat(4, minmax(0, 1fr));
+  align-items: start;
 }
 
 .public-groups-grid {
@@ -1065,7 +1153,6 @@ h1 {
   font-weight: 850;
 }
 
-.public-round,
 .public-group {
   padding: 9px;
 }
@@ -1073,7 +1160,54 @@ h1 {
 .public-round {
   display: grid;
   align-content: start;
-  gap: 6px;
+  gap: 7px;
+  padding: 8px;
+  background: #fbfdfc;
+}
+
+.public-round-head {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 7px;
+  padding-bottom: 4px;
+}
+
+.public-round-head span,
+.public-round-head small {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 950;
+}
+
+.public-round-head span {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: var(--pitch);
+  color: #ffffff;
+  font-size: 0.72rem;
+}
+
+.public-round-head h3 {
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  color: var(--ink);
+  font-size: 0.78rem;
+  text-overflow: ellipsis;
+  text-transform: none;
+  white-space: nowrap;
+}
+
+.public-round-head small {
+  min-width: 24px;
+  height: 22px;
+  border-radius: 999px;
+  background: #edf4f1;
+  color: var(--muted);
+  font-size: 0.68rem;
 }
 
 .public-team {
@@ -1081,15 +1215,49 @@ h1 {
   font-size: 0.82rem;
 }
 
+.public-team-list {
+  display: grid;
+  gap: 4px;
+}
+
+.public-group-head {
+  display: flex;
+  min-height: 24px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.public-third-badge {
+  flex: 0 0 auto;
+  padding: 4px 7px;
+  border-radius: 999px;
+  background: #fff4d7;
+  color: #735211;
+  font-size: 0.62rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.public-team {
+  padding: 3px;
+  border-radius: 7px;
+}
+
+.public-team.is-best-third {
+  background: #fff8e7;
+  box-shadow: inset 0 0 0 1px rgba(224, 170, 63, 0.38);
+}
+
 .public-chip .team-label,
 .public-team .team-label,
-.public-pick-summary .team-label {
+.public-pick-hero .team-label {
   min-width: 0;
 }
 
 .public-chip .team-name,
 .public-team .team-name,
-.public-pick-summary .team-name {
+.public-pick-hero .team-name {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
@@ -1128,6 +1296,7 @@ h1 {
   }
 
   .view-bar,
+  .public-view-bar,
   .champion-strip {
     align-items: stretch;
     flex-direction: column;
@@ -1188,7 +1357,7 @@ h1 {
     grid-template-columns: 1fr 1fr;
   }
 
-  .public-pick-summary,
+  .public-pick-hero,
   .public-rounds-grid,
   .public-groups-grid,
   .public-chip-grid {
@@ -1206,7 +1375,8 @@ h1 {
     padding: 12px;
   }
 
-  .public-pick-summary,
+  .public-pick-hero,
+  .public-stat-grid,
   .public-rounds-grid,
   .public-groups-grid,
   .public-chip-grid {

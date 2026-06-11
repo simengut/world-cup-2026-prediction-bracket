@@ -82,6 +82,8 @@
     leaderboard: [],
     leaderboardStatus: "Loading leaderboard",
     submitting: false,
+    publicView: null,
+    privateDraft: null,
   };
 
   const els = {
@@ -103,6 +105,9 @@
     displayNameInput: document.querySelector("#displayNameInput"),
     submitPicksButton: document.querySelector("#submitPicksButton"),
     submitStatus: document.querySelector("#submitStatus"),
+    publicViewBar: document.querySelector("#publicViewBar"),
+    publicViewTitle: document.querySelector("#publicViewTitle"),
+    returnToDraftButton: document.querySelector("#returnToDraftButton"),
     leaderboardList: document.querySelector("#leaderboardList"),
     refreshLeaderboardButton: document.querySelector("#refreshLeaderboardButton"),
     pickModal: document.querySelector("#pickModal"),
@@ -201,6 +206,8 @@
   }
 
   function saveDraft() {
+    if (state.publicView) return;
+
     try {
       localStorage.setItem(
         STORAGE_KEY,
@@ -324,6 +331,10 @@
     const pickCount = completedPickCount();
     const displayName = els.displayNameInput.value.trim();
 
+    if (state.publicView) {
+      return { ready: false, message: "Viewing public picks" };
+    }
+
     if (state.submitting) {
       return { ready: false, message: "Submitting..." };
     }
@@ -366,6 +377,7 @@
       readiness.ready ? "false" : "true",
     );
     els.submitStatus.textContent = readiness.message;
+    els.displayNameInput.disabled = Boolean(state.publicView);
   }
 
   function thirdAssignment() {
@@ -464,6 +476,8 @@
   }
 
   function moveTeam(groupId, teamId, direction) {
+    if (state.publicView) return;
+
     const group = groupById(groupId);
     const team = group?.teams.find((candidate) => candidate.id === teamId);
     if (!group || !team) return;
@@ -478,6 +492,8 @@
   }
 
   function toggleBestThird(groupId) {
+    if (state.publicView) return;
+
     const group = groupById(groupId);
     if (!group) return;
     const selectedCount = selectedThirdCodes().length;
@@ -492,6 +508,8 @@
   }
 
   function setMatchPick(matchId, side) {
+    if (state.publicView) return;
+
     const key = String(matchId);
     if (state.picks[key] === side) {
       delete state.picks[key];
@@ -640,17 +658,26 @@
           .map(
             (group) => `
               <div class="public-group">
-                <h3>Group ${escapeHtml(group.id)}</h3>
-                ${publicGroupTeams(group)
-                  .map(
-                    (team) => `
-                      <div class="public-team">
-                        <span class="rank-badge rank-${escapeHtml(team.rank)}">${escapeHtml(team.rank)}</span>
-                        ${teamMarkup(team.name)}
-                      </div>
-                    `,
-                  )
-                  .join("")}
+                <div class="public-group-head">
+                  <h3>Group ${escapeHtml(group.id)}</h3>
+                  ${
+                    group.bestThird
+                      ? '<span class="public-third-badge">3rd advances</span>'
+                      : ""
+                  }
+                </div>
+                <div class="public-team-list">
+                  ${publicGroupTeams(group)
+                    .map(
+                      (team) => `
+                        <div class="public-team ${Number(team.rank) === 3 && group.bestThird ? "is-best-third" : ""}">
+                          <span class="rank-badge rank-${escapeHtml(team.rank)}">${escapeHtml(team.rank)}</span>
+                          ${teamMarkup(team.name)}
+                        </div>
+                      `,
+                    )
+                    .join("")}
+                </div>
               </div>
             `,
           )
@@ -662,11 +689,15 @@
   function renderPublicRounds(rounds) {
     const keys = ["round16", "quarterfinals", "semifinals", "final"];
     const cards = keys
-      .map((key) => {
+      .map((key, index) => {
         const teams = Array.isArray(rounds?.[key]) ? rounds[key] : [];
         return `
-          <div class="public-round">
-            <h3>${escapeHtml(PUBLIC_ROUND_LABELS[key])}</h3>
+          <div class="public-round public-round-${escapeHtml(key)}">
+            <div class="public-round-head">
+              <span>${index + 1}</span>
+              <h3>${escapeHtml(PUBLIC_ROUND_LABELS[key])}</h3>
+              <small>${teams.length}</small>
+            </div>
             ${
               teams.length
                 ? teams
@@ -691,56 +722,66 @@
       (candidate) => String(candidate.id) === String(entryId),
     );
 
-    if (!entry?.bracket) {
+    const groups = normalizeStoredGroups(entry?.bracket?.groups);
+    const picks = normalizeStoredPicks(entry?.bracket?.picks);
+
+    if (!entry?.bracket || !groups || !picks) {
       showToast("Picks are not available for that submission.");
       return;
     }
 
-    const groups = Array.isArray(entry.bracket.groups)
-      ? entry.bracket.groups
-      : [];
     const champion =
       entry.bracket.champion || entry.champion || entry.bracket.rounds?.champion;
     const submittedAt = entry.bracket.submittedAt || entry.created_at;
 
-    els.pickModalTitle.textContent = `${entry.display_name}'s bracket`;
-    els.pickModalBody.innerHTML = `
-      <div class="public-pick-summary">
-        <div>
-          <span>Champion</span>
-          <strong>${teamMarkup(champion || "Open")}</strong>
-        </div>
-        <div>
-          <span>Score</span>
-          <strong>${Number(entry.score || 0)} / ${Number(entry.max_score || 0)}</strong>
-        </div>
-        <div>
-          <span>Submitted</span>
-          <strong>${escapeHtml(formatDateLabel(submittedAt))}</strong>
-        </div>
-      </div>
+    if (!state.publicView) {
+      state.privateDraft = {
+        groups: clone(state.groups),
+        annexRows: clone(state.annexRows),
+        picks: { ...state.picks },
+        activeView: state.activeView,
+        importName: state.importName,
+        importStatus: state.importStatus,
+        displayName: els.displayNameInput.value,
+      };
+    }
 
-      <section class="public-pick-section">
-        <h3>Knockout Progression</h3>
-        ${renderPublicRounds(entry.bracket.rounds)}
-      </section>
-
-      <section class="public-pick-section">
-        <h3>Best Thirds</h3>
-        ${renderPublicBestThirds(groups)}
-      </section>
-
-      <section class="public-pick-section">
-        <h3>Group Picks</h3>
-        ${renderPublicGroups(groups)}
-      </section>
-    `;
-    els.pickModal.hidden = false;
-    els.closePickModalButton.focus();
+    state.groups = groups;
+    state.annexRows = clone(DATA.annexRows);
+    state.picks = picks;
+    state.activeView = "bracket";
+    state.importName = `${entry.display_name}'s bracket`;
+    state.importStatus = "Public";
+    state.publicView = {
+      title: `${entry.display_name}'s picks`,
+      detail: `${champion || "Open champion"} · ${Number(entry.score || 0)} / ${Number(entry.max_score || 0)} · ${formatDateLabel(submittedAt)}`,
+    };
+    render();
+    document.querySelector(".workspace")?.scrollIntoView({
+      behavior: "smooth",
+      block: "start",
+    });
   }
 
   function closePublicPicks() {
     els.pickModal.hidden = true;
+  }
+
+  function returnToDraft() {
+    if (!state.privateDraft) return;
+
+    const draft = state.privateDraft;
+    state.groups = draft.groups;
+    state.annexRows = draft.annexRows;
+    state.picks = draft.picks;
+    state.activeView = draft.activeView;
+    state.importName = draft.importName;
+    state.importStatus = draft.importStatus;
+    els.displayNameInput.value = draft.displayName;
+    state.publicView = null;
+    state.privateDraft = null;
+    render();
+    showToast("Your picks restored.");
   }
 
   let submitConfirmResolve = null;
@@ -763,11 +804,12 @@
 
   function renderGroups() {
     const selectedCount = selectedThirdCodes().length;
+    const readonly = Boolean(state.publicView);
     els.groupsGrid.innerHTML = state.groups
       .map((group) => {
         const teams = sortedTeams(group);
         const third = thirdTeam(group);
-        const bestDisabled = !group.bestThird && selectedCount >= 8;
+        const bestDisabled = readonly || (!group.bestThird && selectedCount >= 8);
 
         return `
           <article class="group-card" data-group-id="${escapeHtml(group.id)}">
@@ -801,7 +843,7 @@
                           data-action="move-up"
                           data-group-id="${escapeHtml(group.id)}"
                           data-team-id="${escapeHtml(team.id)}"
-                          ${team.rank === 1 ? "disabled" : ""}
+                          ${readonly || team.rank === 1 ? "disabled" : ""}
                           aria-label="Move ${escapeHtml(team.name)} up"
                         >
                           ↑
@@ -812,7 +854,7 @@
                           data-action="move-down"
                           data-group-id="${escapeHtml(group.id)}"
                           data-team-id="${escapeHtml(team.id)}"
-                          ${team.rank === 4 ? "disabled" : ""}
+                          ${readonly || team.rank === 4 ? "disabled" : ""}
                           aria-label="Move ${escapeHtml(team.name)} down"
                         >
                           ↓
@@ -855,7 +897,7 @@
     const entrant = match[side];
     const picked = match.pick === side;
     const seed = side === "home" ? match.homeSeed : match.awaySeed;
-    const disabled = !entrant;
+    const disabled = !entrant || state.publicView;
     const label = entrant ? entrant.name : "Waiting";
 
     return `
@@ -995,9 +1037,24 @@
     els.bracketView.hidden = state.activeView !== "bracket";
   }
 
+  function renderPublicViewMode() {
+    const publicView = state.publicView;
+    document.body.classList.toggle("is-public-view", Boolean(publicView));
+    els.publicViewBar.hidden = !publicView;
+    els.publicViewTitle.textContent = publicView
+      ? `${publicView.title} · ${publicView.detail}`
+      : "";
+
+    els.excelInput.disabled = Boolean(publicView);
+    els.resetButton.disabled = Boolean(publicView);
+    els.clearKnockoutButton.disabled = Boolean(publicView);
+    els.exportButton.disabled = Boolean(publicView);
+  }
+
   function render() {
     const bracket = buildBracket();
     const rounds = displayRounds(bracket);
+    renderPublicViewMode();
     renderStatus(bracket);
     renderMetrics(bracket);
     renderThirdList();
@@ -1435,6 +1492,8 @@
   });
 
   els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
+
+  els.returnToDraftButton.addEventListener("click", returnToDraft);
 
   window.addEventListener("resize", () => {
     window.cancelAnimationFrame(renderConnectors.frame);
