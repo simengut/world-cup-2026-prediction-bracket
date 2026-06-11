@@ -67,6 +67,9 @@
     activeView: "bracket",
     importName: DATA.sourceFile,
     importStatus: "Workbook",
+    leaderboard: [],
+    leaderboardStatus: "Loading leaderboard",
+    submitting: false,
   };
 
   const els = {
@@ -84,6 +87,12 @@
     resetButton: document.querySelector("#resetButton"),
     clearKnockoutButton: document.querySelector("#clearKnockoutButton"),
     exportButton: document.querySelector("#exportButton"),
+    submitForm: document.querySelector("#submitForm"),
+    displayNameInput: document.querySelector("#displayNameInput"),
+    submitPicksButton: document.querySelector("#submitPicksButton"),
+    submitStatus: document.querySelector("#submitStatus"),
+    leaderboardList: document.querySelector("#leaderboardList"),
+    refreshLeaderboardButton: document.querySelector("#refreshLeaderboardButton"),
     viewButtons: Array.from(document.querySelectorAll("[data-view]")),
     groupsView: document.querySelector("#groupsView"),
     bracketView: document.querySelector("#bracketView"),
@@ -328,6 +337,32 @@
       .join("");
   }
 
+  function renderLeaderboard() {
+    if (!state.leaderboard.length) {
+      els.leaderboardList.innerHTML = `<div class="empty-state">${escapeHtml(state.leaderboardStatus)}</div>`;
+      return;
+    }
+
+    els.leaderboardList.innerHTML = state.leaderboard
+      .map((entry, index) => {
+        const champion = entry.champion || "Open";
+        const scoreLabel = entry.max_score
+          ? `${Number(entry.score || 0)} / ${Number(entry.max_score)}`
+          : Number(entry.score || 0);
+        return `
+          <div class="leaderboard-row">
+            <span class="rank-badge">${index + 1}</span>
+            <div class="leaderboard-main">
+              <strong>${escapeHtml(entry.display_name)}</strong>
+              <span>${teamMarkup(champion)}</span>
+            </div>
+            <span class="score-pill">${escapeHtml(scoreLabel)}</span>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
   function renderGroups() {
     const selectedCount = selectedThirdCodes().length;
     els.groupsGrid.innerHTML = state.groups
@@ -493,6 +528,7 @@
     renderStatus(bracket);
     renderMetrics(bracket);
     renderThirdList();
+    renderLeaderboard();
     renderGroups();
     renderChampion(bracket);
     renderBracket(bracket);
@@ -676,6 +712,149 @@
     URL.revokeObjectURL(url);
   }
 
+  async function readApiResponse(response) {
+    const contentType = response.headers.get("content-type") || "";
+    if (contentType.includes("application/json")) return response.json();
+    const text = await response.text();
+    return {
+      error:
+        response.status === 404
+          ? "Leaderboard backend is not running here."
+          : text.slice(0, 160),
+    };
+  }
+
+  function backendAvailableHere() {
+    const localStaticServer =
+      (location.hostname === "127.0.0.1" || location.hostname === "localhost") &&
+      location.port === "5173";
+    return !localStaticServer && location.protocol !== "file:";
+  }
+
+  function roundWinners(bracket, roundKey) {
+    return bracket.rounds[roundKey]
+      .map((match) => match.winner?.name)
+      .filter(Boolean);
+  }
+
+  function currentSubmissionPayload() {
+    const bracket = buildBracket();
+    const champion = bracket.matchesById["104"]?.winner?.name || "";
+
+    return {
+      displayName: els.displayNameInput.value,
+      champion,
+      bracket: {
+        groups: state.groups,
+        picks: state.picks,
+        bestThirdMap: bracket.assignment.row,
+        champion: champion || null,
+        rounds: {
+          round16: roundWinners(bracket, "round32"),
+          quarterfinals: roundWinners(bracket, "round16"),
+          semifinals: roundWinners(bracket, "quarterfinals"),
+          final: roundWinners(bracket, "semifinals"),
+          champion: champion || null,
+        },
+        submittedAt: new Date().toISOString(),
+      },
+    };
+  }
+
+  async function loadLeaderboard() {
+    if (!backendAvailableHere()) {
+      state.leaderboard = [];
+      state.leaderboardStatus = "Leaderboard available after deployment";
+      renderLeaderboard();
+      return;
+    }
+
+    state.leaderboardStatus = "Loading leaderboard";
+    renderLeaderboard();
+
+    try {
+      const response = await fetch("/api/leaderboard", {
+        headers: { accept: "application/json" },
+      });
+      const payload = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(payload.message || payload.error || "Leaderboard unavailable");
+      }
+
+      state.leaderboard = payload.entries || [];
+      state.leaderboardStatus = state.leaderboard.length
+        ? ""
+        : "No submissions yet";
+    } catch (error) {
+      state.leaderboard = [];
+      state.leaderboardStatus =
+        error.message === "Failed to fetch"
+          ? "Leaderboard offline"
+          : error.message;
+    }
+
+    renderLeaderboard();
+  }
+
+  async function submitPicks() {
+    const displayName = els.displayNameInput.value.trim();
+    const selectedThirds = selectedThirdCodes().length;
+    const pickCount = Object.keys(state.picks).length;
+
+    if (!displayName) {
+      showToast("Enter a name before submitting.");
+      els.displayNameInput.focus();
+      return;
+    }
+
+    if (!backendAvailableHere()) {
+      showToast("Submit picks from the deployed Vercel site.");
+      els.submitStatus.textContent = "Available after deployment";
+      return;
+    }
+
+    if (selectedThirds !== 8) {
+      showToast("Select exactly eight best third-place teams first.");
+      return;
+    }
+
+    if (pickCount < TOTAL_KNOCKOUT_PICKS) {
+      showToast("Complete every knockout pick before submitting.");
+      return;
+    }
+
+    state.submitting = true;
+    els.submitPicksButton.disabled = true;
+    els.submitStatus.textContent = "Submitting...";
+
+    try {
+      const response = await fetch("/api/submissions", {
+        method: "POST",
+        headers: {
+          "content-type": "application/json",
+          accept: "application/json",
+        },
+        body: JSON.stringify(currentSubmissionPayload()),
+      });
+      const payload = await readApiResponse(response);
+
+      if (!response.ok) {
+        throw new Error(payload.message || payload.error || "Submission failed");
+      }
+
+      els.submitStatus.textContent = "Submitted";
+      showToast("Picks submitted.");
+      await loadLeaderboard();
+    } catch (error) {
+      els.submitStatus.textContent = error.message;
+      showToast(error.message);
+    } finally {
+      state.submitting = false;
+      els.submitPicksButton.disabled = false;
+    }
+  }
+
   els.groupsGrid.addEventListener("click", (event) => {
     const button = event.target.closest("button[data-action]");
     if (!button) return;
@@ -731,5 +910,13 @@
 
   els.exportButton.addEventListener("click", exportPicks);
 
+  els.submitForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    submitPicks();
+  });
+
+  els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
+
   render();
+  loadLeaderboard();
 })();

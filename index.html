@@ -59,6 +59,42 @@
 
           <section class="summary-panel">
             <div class="panel-heading">
+              <h2>Submit Picks</h2>
+            </div>
+            <form class="submit-form" id="submitForm">
+              <label class="field-label" for="displayNameInput">Name</label>
+              <input
+                class="text-input"
+                id="displayNameInput"
+                name="displayName"
+                type="text"
+                maxlength="60"
+                autocomplete="name"
+                placeholder="Your name"
+                required
+              />
+              <button class="control-button primary wide" id="submitPicksButton" type="submit">
+                <span aria-hidden="true">✓</span>
+                Submit Picks
+              </button>
+              <div class="panel-note" id="submitStatus">Not submitted</div>
+            </form>
+          </section>
+
+          <section class="summary-panel">
+            <div class="panel-heading">
+              <h2>Leaderboard</h2>
+              <button class="icon-button" id="refreshLeaderboardButton" type="button" aria-label="Refresh leaderboard">
+                ↻
+              </button>
+            </div>
+            <div class="leaderboard-list" id="leaderboardList">
+              <div class="empty-state">Loading leaderboard</div>
+            </div>
+          </section>
+
+          <section class="summary-panel">
+            <div class="panel-heading">
               <h2>Tools</h2>
             </div>
             <div class="tool-stack">
