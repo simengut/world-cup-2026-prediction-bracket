@@ -160,6 +160,46 @@
       .sort();
   }
 
+  function sourceMatchIds(match) {
+    return [match.homeSeed, match.awaySeed].filter((seed) =>
+      Number.isInteger(seed),
+    );
+  }
+
+  function sortMatchesByIds(matches, ids) {
+    const order = new Map(ids.map((id, index) => [String(id), index]));
+
+    return [...matches].sort((a, b) => {
+      const aOrder = order.has(String(a.id))
+        ? order.get(String(a.id))
+        : Number.MAX_SAFE_INTEGER;
+      const bOrder = order.has(String(b.id))
+        ? order.get(String(b.id))
+        : Number.MAX_SAFE_INTEGER;
+
+      if (aOrder !== bOrder) return aOrder - bOrder;
+      return a.id - b.id;
+    });
+  }
+
+  function displayRounds(bracket) {
+    const ordered = {};
+    const finalRound = ROUND_META[ROUND_META.length - 1].key;
+    ordered[finalRound] = [...bracket.rounds[finalRound]];
+
+    for (let index = ROUND_META.length - 1; index > 0; index -= 1) {
+      const currentKey = ROUND_META[index].key;
+      const previousKey = ROUND_META[index - 1].key;
+      const sourceIds = ordered[currentKey].flatMap(sourceMatchIds);
+      ordered[previousKey] = sortMatchesByIds(
+        bracket.rounds[previousKey],
+        sourceIds,
+      );
+    }
+
+    return ordered;
+  }
+
   function completedPickCount() {
     return REQUIRED_MATCH_IDS.filter(
       (id) => state.picks[id] === "home" || state.picks[id] === "away",
@@ -533,9 +573,83 @@
     `;
   }
 
-  function renderBracket(bracket) {
+  function renderConnectors(rounds) {
+    els.bracketBoard.querySelector(".bracket-connectors")?.remove();
+    if (els.bracketView.hidden) return;
+
+    const boardBox = els.bracketBoard.getBoundingClientRect();
+    const paths = [];
+
+    ROUND_META.slice(1).forEach((round) => {
+      rounds[round.key].forEach((match) => {
+        const [firstSourceId, secondSourceId] = sourceMatchIds(match);
+        if (firstSourceId === undefined || secondSourceId === undefined) return;
+
+        const sourceCards = [firstSourceId, secondSourceId].map((id) =>
+          els.bracketBoard.querySelector(`[data-match-id="${id}"]`),
+        );
+        const targetCard = els.bracketBoard.querySelector(
+          `[data-match-id="${match.id}"]`,
+        );
+        if (!sourceCards[0] || !sourceCards[1] || !targetCard) return;
+
+        const sourcePoints = sourceCards.map((card) => {
+          const box = card.getBoundingClientRect();
+          return {
+            x: box.right - boardBox.left + els.bracketBoard.scrollLeft,
+            y:
+              box.top -
+              boardBox.top +
+              els.bracketBoard.scrollTop +
+              box.height / 2,
+          };
+        });
+        const targetBox = targetCard.getBoundingClientRect();
+        const targetPoint = {
+          x: targetBox.left - boardBox.left + els.bracketBoard.scrollLeft,
+          y:
+            targetBox.top -
+            boardBox.top +
+            els.bracketBoard.scrollTop +
+            targetBox.height / 2,
+        };
+        const elbowX =
+          sourcePoints[0].x + (targetPoint.x - sourcePoints[0].x) / 2;
+        const topY = Math.min(sourcePoints[0].y, sourcePoints[1].y);
+        const bottomY = Math.max(sourcePoints[0].y, sourcePoints[1].y);
+
+        paths.push(
+          [
+            `M ${sourcePoints[0].x} ${sourcePoints[0].y} H ${elbowX}`,
+            `M ${sourcePoints[1].x} ${sourcePoints[1].y} H ${elbowX}`,
+            `M ${elbowX} ${topY} V ${bottomY}`,
+            `M ${elbowX} ${targetPoint.y} H ${targetPoint.x}`,
+          ].join(" "),
+        );
+      });
+    });
+
+    if (!paths.length) return;
+
+    const svg = document.createElementNS("http://www.w3.org/2000/svg", "svg");
+    svg.classList.add("bracket-connectors");
+    svg.setAttribute("aria-hidden", "true");
+    svg.setAttribute("width", String(els.bracketBoard.scrollWidth));
+    svg.setAttribute("height", String(els.bracketBoard.scrollHeight));
+    svg.setAttribute(
+      "viewBox",
+      `0 0 ${els.bracketBoard.scrollWidth} ${els.bracketBoard.scrollHeight}`,
+    );
+    svg.innerHTML = paths
+      .map((path) => `<path class="bracket-connector" d="${path}" />`)
+      .join("");
+
+    els.bracketBoard.append(svg);
+  }
+
+  function renderBracket(rounds) {
     els.bracketBoard.innerHTML = ROUND_META.map((round) => {
-      const matches = bracket.rounds[round.key];
+      const matches = rounds[round.key];
       return `
         <section class="round-column" aria-label="${escapeHtml(round.label)}">
           <div class="round-title">
@@ -583,14 +697,16 @@
 
   function render() {
     const bracket = buildBracket();
+    const rounds = displayRounds(bracket);
     renderStatus(bracket);
     renderMetrics(bracket);
     renderThirdList();
     renderLeaderboard();
     renderGroups();
     renderChampion(bracket);
-    renderBracket(bracket);
+    renderBracket(rounds);
     renderViews();
+    renderConnectors(rounds);
     updateSubmitState();
   }
 
@@ -984,6 +1100,13 @@
   els.displayNameInput.addEventListener("input", updateSubmitState);
 
   els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
+
+  window.addEventListener("resize", () => {
+    window.cancelAnimationFrame(renderConnectors.frame);
+    renderConnectors.frame = window.requestAnimationFrame(() => {
+      renderConnectors(displayRounds(buildBracket()));
+    });
+  });
 
   render();
   loadLeaderboard();

@@ -629,8 +629,8 @@ h1 {
 .bracket-board {
   --match-card-height: 112px;
   --match-gap: 10px;
-  --round-gap: 10px;
-  --connector-width: 7px;
+  --round-gap: 16px;
+  position: relative;
   display: grid;
   grid-template-columns:
     minmax(172px, 1.25fr)
@@ -647,6 +647,7 @@ h1 {
 .round-column {
   min-width: 172px;
   position: relative;
+  z-index: 1;
 }
 
 .round-title {
@@ -694,22 +695,22 @@ h1 {
   z-index: 1;
 }
 
-.round-column:not(:first-child) .match-card::before,
-.round-column:not(:last-child) .match-card::after {
+.bracket-connectors {
   position: absolute;
-  top: 50%;
-  width: var(--connector-width);
-  height: 2px;
-  content: "";
-  background: rgba(15, 111, 78, 0.34);
+  top: 0;
+  left: 0;
+  z-index: 0;
+  overflow: visible;
+  pointer-events: none;
 }
 
-.round-column:not(:first-child) .match-card::before {
-  right: 100%;
-}
-
-.round-column:not(:last-child) .match-card::after {
-  left: 100%;
+.bracket-connector {
+  fill: none;
+  stroke: rgba(15, 111, 78, 0.34);
+  stroke-linecap: square;
+  stroke-linejoin: miter;
+  stroke-width: 2;
+  vector-effect: non-scaling-stroke;
 }
 
 .match-meta {
