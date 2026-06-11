@@ -16,8 +16,11 @@
   const REQUIRED_MATCH_IDS = Object.values(DATA.rounds)
     .flat()
     .map((match) => String(match.id));
+  const REQUIRED_MATCH_ID_SET = new Set(REQUIRED_MATCH_IDS);
   const TOTAL_KNOCKOUT_PICKS = 31;
   const FLAG_BASE = "vendor/flags";
+  const STORAGE_KEY = "wc2026-prediction-draft";
+  const STORAGE_VERSION = 1;
   const FLAG_CODES = {
     "Algerie": "dz",
     "Argentina": "ar",
@@ -148,6 +151,112 @@
   function selectedVisibility() {
     const checked = els.visibilityInputs.find((input) => input.checked);
     return checked?.value === "public" ? "public" : "private";
+  }
+
+  function setVisibility(value) {
+    const nextValue = value === "public" ? "public" : "private";
+    els.visibilityInputs.forEach((input) => {
+      input.checked = input.value === nextValue;
+    });
+  }
+
+  function normalizeStoredGroups(groups) {
+    if (!Array.isArray(groups) || groups.length !== DATA.groups.length) {
+      return null;
+    }
+
+    const templateIds = new Set(DATA.groups.map((group) => group.id));
+    const normalized = groups.map((group) => {
+      const id = String(group?.id || "").trim().toUpperCase();
+      if (!templateIds.has(id) || !Array.isArray(group.teams)) return null;
+
+      const teams = group.teams.map((team, index) => ({
+        id: String(team?.id || `${id}${index + 1}`).slice(0, 24),
+        name: String(team?.name || "").trim().slice(0, 80),
+        rank: Number(team?.rank),
+      }));
+      const ranks = teams.map((team) => team.rank);
+      const validRanks =
+        teams.length === 4 &&
+        ranks.every((rank) => Number.isInteger(rank) && rank >= 1 && rank <= 4) &&
+        new Set(ranks).size === 4 &&
+        teams.every((team) => team.name);
+
+      if (!validRanks) return null;
+
+      return {
+        id,
+        name: String(group.name || `Group ${id}`).slice(0, 40),
+        bestThird: Boolean(group.bestThird),
+        teams,
+      };
+    });
+
+    if (normalized.some((group) => !group)) return null;
+    if (new Set(normalized.map((group) => group.id)).size !== DATA.groups.length) {
+      return null;
+    }
+
+    return normalized;
+  }
+
+  function normalizeStoredPicks(picks) {
+    if (!picks || typeof picks !== "object" || Array.isArray(picks)) return null;
+
+    return Object.fromEntries(
+      Object.entries(picks).filter(
+        ([matchId, pick]) =>
+          REQUIRED_MATCH_ID_SET.has(String(matchId)) &&
+          (pick === "home" || pick === "away"),
+      ),
+    );
+  }
+
+  function saveDraft() {
+    try {
+      localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify({
+          version: STORAGE_VERSION,
+          savedAt: new Date().toISOString(),
+          groups: state.groups,
+          picks: state.picks,
+          importName: state.importName,
+          importStatus: state.importStatus,
+          activeView: state.activeView,
+          displayName: els.displayNameInput.value,
+          visibility: selectedVisibility(),
+        }),
+      );
+    } catch (error) {
+      console.warn("Draft save failed", error);
+    }
+  }
+
+  function restoreDraft() {
+    try {
+      const rawDraft = localStorage.getItem(STORAGE_KEY);
+      if (!rawDraft) return false;
+
+      const draft = JSON.parse(rawDraft);
+      if (draft?.version !== STORAGE_VERSION) return false;
+
+      const groups = normalizeStoredGroups(draft.groups);
+      const picks = normalizeStoredPicks(draft.picks);
+      if (!groups || !picks) return false;
+
+      state.groups = groups;
+      state.picks = picks;
+      state.importName = String(draft.importName || DATA.sourceFile).slice(0, 100);
+      state.importStatus = String(draft.importStatus || "Saved draft").slice(0, 40);
+      state.activeView = draft.activeView === "groups" ? "groups" : "bracket";
+      els.displayNameInput.value = String(draft.displayName || "").slice(0, 60);
+      setVisibility(draft.visibility);
+      return true;
+    } catch (error) {
+      console.warn("Draft restore failed", error);
+      return false;
+    }
   }
 
   function teamMarkup(teamName) {
@@ -899,6 +1008,7 @@
     renderViews();
     renderConnectors(rounds);
     updateSubmitState();
+    saveDraft();
   }
 
   function showToast(message) {
@@ -1305,7 +1415,14 @@
     submitPicks();
   });
 
-  els.displayNameInput.addEventListener("input", updateSubmitState);
+  els.displayNameInput.addEventListener("input", () => {
+    updateSubmitState();
+    saveDraft();
+  });
+
+  els.visibilityInputs.forEach((input) => {
+    input.addEventListener("change", saveDraft);
+  });
 
   els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
 
@@ -1320,6 +1437,8 @@
     if (event.key === "Escape" && !els.pickModal.hidden) closePublicPicks();
   });
 
+  const draftRestored = restoreDraft();
   render();
+  if (draftRestored) showToast("Saved picks restored.");
   loadLeaderboard();
 })();
