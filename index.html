@@ -1,0 +1,135 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>World Cup 2026 Predictor</title>
+    <link
+      rel="icon"
+      href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f6f4e'/%3E%3Ccircle cx='32' cy='32' r='18' fill='%23e0aa3f'/%3E%3C/svg%3E"
+    />
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <header class="app-header">
+        <div class="header-copy">
+          <p class="eyebrow">World Cup 2026</p>
+          <h1>Prediction Bracket</h1>
+          <div class="header-meta" id="headerMeta">Template loaded</div>
+        </div>
+        <div class="header-actions" aria-label="Bracket actions">
+          <label class="control-button primary" for="excelInput">
+            <span aria-hidden="true">↥</span>
+            Upload Excel
+          </label>
+          <input id="excelInput" type="file" accept=".xlsx,.xls" hidden />
+          <button class="control-button" id="resetButton" type="button">
+            <span aria-hidden="true">↺</span>
+            Reset
+          </button>
+          <a
+            class="control-button"
+            href="Tippin%20VM%202026%20-mal.xlsx"
+            download
+          >
+            <span aria-hidden="true">↓</span>
+            Template
+          </a>
+        </div>
+      </header>
+
+      <main class="app-layout">
+        <aside class="control-rail" aria-label="Prediction summary">
+          <section class="summary-panel">
+            <div class="panel-heading">
+              <h2>Status</h2>
+              <span id="importBadge" class="soft-badge">Workbook</span>
+            </div>
+            <div class="metrics-grid" id="metricsGrid"></div>
+          </section>
+
+          <section class="summary-panel">
+            <div class="panel-heading">
+              <h2>Best Thirds</h2>
+              <span id="thirdCounter" class="soft-badge">0 / 8</span>
+            </div>
+            <div class="third-list" id="thirdList"></div>
+          </section>
+
+          <section class="summary-panel">
+            <div class="panel-heading">
+              <h2>Tools</h2>
+            </div>
+            <div class="tool-stack">
+              <button class="control-button wide" id="clearKnockoutButton" type="button">
+                <span aria-hidden="true">×</span>
+                Clear Knockout
+              </button>
+              <button class="control-button wide" id="exportButton" type="button">
+                <span aria-hidden="true">⇩</span>
+                Export Picks
+              </button>
+            </div>
+          </section>
+        </aside>
+
+        <section class="workspace">
+          <div class="view-bar">
+            <div class="segmented-control" role="tablist" aria-label="Views">
+              <button
+                class="segment"
+                id="groupsTab"
+                type="button"
+                role="tab"
+                aria-controls="groupsView"
+                aria-selected="false"
+                data-view="groups"
+              >
+                Groups
+              </button>
+              <button
+                class="segment active"
+                id="bracketTab"
+                type="button"
+                role="tab"
+                aria-controls="bracketView"
+                aria-selected="true"
+                data-view="bracket"
+              >
+                Bracket
+              </button>
+            </div>
+            <div class="inline-status" id="inlineStatus">Ready</div>
+          </div>
+
+          <section
+            class="view-panel"
+            id="groupsView"
+            role="tabpanel"
+            aria-labelledby="groupsTab"
+            hidden
+          >
+            <div class="groups-grid" id="groupsGrid"></div>
+          </section>
+
+          <section
+            class="view-panel"
+            id="bracketView"
+            role="tabpanel"
+            aria-labelledby="bracketTab"
+          >
+            <div class="champion-strip" id="championStrip"></div>
+            <div class="bracket-board" id="bracketBoard"></div>
+          </section>
+        </section>
+      </main>
+    </div>
+
+    <div class="toast" id="toast" aria-live="polite"></div>
+
+    <script src="vendor/xlsx.full.min.js" defer></script>
+    <script src="template-data.js" defer></script>
+    <script src="app.js" defer></script>
+  </body>
+</html>
