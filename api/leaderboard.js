@@ -1,6 +1,35 @@
 import { ensureSchema, hasDatabase, query, sendJson } from "./_db.js";
 import { actualResultsFromEnv, scoreBracket } from "./_scoring.js";
 
+function publicBracket(bracket) {
+  if (!bracket || typeof bracket !== "object") return null;
+
+  return {
+    groups: Array.isArray(bracket.groups)
+      ? bracket.groups.map((group) => ({
+          id: group.id,
+          bestThird: Boolean(group.bestThird),
+          teams: Array.isArray(group.teams)
+            ? group.teams.map((team) => ({
+                id: team.id,
+                name: team.name,
+                rank: team.rank,
+              }))
+            : [],
+        }))
+      : [],
+    picks:
+      bracket.picks && typeof bracket.picks === "object" ? bracket.picks : {},
+    bestThirdMap: bracket.bestThirdMap || null,
+    champion: bracket.champion || null,
+    rounds:
+      bracket.rounds && typeof bracket.rounds === "object"
+        ? bracket.rounds
+        : {},
+    submittedAt: bracket.submittedAt || null,
+  };
+}
+
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("allow", "GET");
@@ -17,7 +46,7 @@ export default async function handler(req, res) {
   try {
     await ensureSchema();
     const rows = await query`
-      select id, display_name, champion, score, bracket, created_at, updated_at
+      select id, display_name, champion, is_public, score, bracket, created_at, updated_at
       from submissions
       order by created_at asc
     `;
@@ -29,6 +58,8 @@ export default async function handler(req, res) {
           id: row.id,
           display_name: row.display_name,
           champion: row.champion,
+          is_public: Boolean(row.is_public),
+          bracket: row.is_public ? publicBracket(row.bracket) : null,
           score: scored.score,
           max_score: scored.maxAvailable,
           breakdown: scored.breakdown,

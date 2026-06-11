@@ -17,10 +17,16 @@ export async function ensureSchema() {
       display_name text not null,
       champion text,
       bracket jsonb not null,
+      is_public boolean not null default false,
       score integer not null default 0,
       created_at timestamptz not null default now(),
       updated_at timestamptz not null default now()
     )
+  `;
+
+  await sql`
+    alter table submissions
+      add column if not exists is_public boolean not null default false
   `;
 
   await sql`
@@ -44,4 +50,3 @@ export function sendJson(res, status, body) {
   res.setHeader("content-type", "application/json; charset=utf-8");
   res.end(JSON.stringify(body));
 }
-

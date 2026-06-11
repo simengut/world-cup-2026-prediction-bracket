@@ -7,6 +7,12 @@
     { key: "semifinals", label: "Semifinals" },
     { key: "final", label: "Final" },
   ];
+  const PUBLIC_ROUND_LABELS = {
+    round16: "Round of 16",
+    quarterfinals: "Quarterfinals",
+    semifinals: "Semifinals",
+    final: "Finalists",
+  };
   const REQUIRED_MATCH_IDS = Object.values(DATA.rounds)
     .flat()
     .map((match) => String(match.id));
@@ -92,10 +98,17 @@
     exportButton: document.querySelector("#exportButton"),
     submitForm: document.querySelector("#submitForm"),
     displayNameInput: document.querySelector("#displayNameInput"),
+    visibilityInputs: Array.from(
+      document.querySelectorAll('input[name="pickVisibility"]'),
+    ),
     submitPicksButton: document.querySelector("#submitPicksButton"),
     submitStatus: document.querySelector("#submitStatus"),
     leaderboardList: document.querySelector("#leaderboardList"),
     refreshLeaderboardButton: document.querySelector("#refreshLeaderboardButton"),
+    pickModal: document.querySelector("#pickModal"),
+    pickModalTitle: document.querySelector("#pickModalTitle"),
+    pickModalBody: document.querySelector("#pickModalBody"),
+    closePickModalButton: document.querySelector("#closePickModalButton"),
     viewButtons: Array.from(document.querySelectorAll("[data-view]")),
     groupsView: document.querySelector("#groupsView"),
     bracketView: document.querySelector("#bracketView"),
@@ -130,6 +143,11 @@
         referrerpolicy="no-referrer"
       />
     `;
+  }
+
+  function selectedVisibility() {
+    const checked = els.visibilityInputs.find((input) => input.checked);
+    return checked?.value === "public" ? "public" : "private";
   }
 
   function teamMarkup(teamName) {
@@ -447,6 +465,7 @@
         const scoreLabel = entry.max_score
           ? `${Number(entry.score || 0)} / ${Number(entry.max_score)}`
           : Number(entry.score || 0);
+        const isPublic = Boolean(entry.is_public && entry.bracket);
         return `
           <div class="leaderboard-row">
             <span class="rank-badge">${index + 1}</span>
@@ -454,11 +473,183 @@
               <strong>${escapeHtml(entry.display_name)}</strong>
               <span>${teamMarkup(champion)}</span>
             </div>
-            <span class="score-pill">${escapeHtml(scoreLabel)}</span>
+            <div class="leaderboard-actions">
+              <span class="score-pill">${escapeHtml(scoreLabel)}</span>
+              ${
+                isPublic
+                  ? `<button class="mini-button" type="button" data-action="view-public-picks" data-entry-id="${escapeHtml(entry.id)}">View</button>`
+                  : '<span class="privacy-pill">Private</span>'
+              }
+            </div>
           </div>
         `;
       })
       .join("");
+  }
+
+  function formatDateLabel(value) {
+    const date = new Date(value);
+    if (Number.isNaN(date.getTime())) return "Submitted";
+
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  function publicGroupTeams(group) {
+    return Array.isArray(group?.teams)
+      ? [...group.teams].sort((a, b) => Number(a.rank) - Number(b.rank))
+      : [];
+  }
+
+  function renderPublicBestThirds(groups) {
+    const selected = groups
+      .filter((group) => group.bestThird)
+      .map((group) => ({
+        groupId: group.id,
+        team: publicGroupTeams(group).find((team) => Number(team.rank) === 3),
+      }))
+      .filter((item) => item.team);
+
+    if (!selected.length) {
+      return '<div class="empty-state">No best thirds saved</div>';
+    }
+
+    return `
+      <div class="public-chip-grid">
+        ${selected
+          .map(
+            (item) => `
+              <div class="public-chip">
+                <span class="seed-token">3${escapeHtml(item.groupId)}</span>
+                ${teamMarkup(item.team.name)}
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderPublicGroups(groups) {
+    if (!groups.length) {
+      return '<div class="empty-state">No group picks saved</div>';
+    }
+
+    return `
+      <div class="public-groups-grid">
+        ${groups
+          .map(
+            (group) => `
+              <div class="public-group">
+                <h3>Group ${escapeHtml(group.id)}</h3>
+                ${publicGroupTeams(group)
+                  .map(
+                    (team) => `
+                      <div class="public-team">
+                        <span class="rank-badge rank-${escapeHtml(team.rank)}">${escapeHtml(team.rank)}</span>
+                        ${teamMarkup(team.name)}
+                      </div>
+                    `,
+                  )
+                  .join("")}
+              </div>
+            `,
+          )
+          .join("")}
+      </div>
+    `;
+  }
+
+  function renderPublicRounds(rounds) {
+    const keys = ["round16", "quarterfinals", "semifinals", "final"];
+    const cards = keys
+      .map((key) => {
+        const teams = Array.isArray(rounds?.[key]) ? rounds[key] : [];
+        return `
+          <div class="public-round">
+            <h3>${escapeHtml(PUBLIC_ROUND_LABELS[key])}</h3>
+            ${
+              teams.length
+                ? teams
+                    .map(
+                      (team) => `
+                        <div class="public-chip">${teamMarkup(team)}</div>
+                      `,
+                    )
+                    .join("")
+                : '<div class="empty-state">No picks saved</div>'
+            }
+          </div>
+        `;
+      })
+      .join("");
+
+    return `<div class="public-rounds-grid">${cards}</div>`;
+  }
+
+  function openPublicPicks(entryId) {
+    const entry = state.leaderboard.find(
+      (candidate) => String(candidate.id) === String(entryId),
+    );
+
+    if (!entry?.is_public || !entry.bracket) {
+      showToast("That submission is private.");
+      return;
+    }
+
+    const groups = Array.isArray(entry.bracket.groups)
+      ? entry.bracket.groups
+      : [];
+    const champion =
+      entry.bracket.champion || entry.champion || entry.bracket.rounds?.champion;
+    const submittedAt = entry.bracket.submittedAt || entry.created_at;
+
+    els.pickModalTitle.textContent = `${entry.display_name}'s bracket`;
+    els.pickModalBody.innerHTML = `
+      <div class="public-pick-summary">
+        <div>
+          <span>Champion</span>
+          <strong>${teamMarkup(champion || "Open")}</strong>
+        </div>
+        <div>
+          <span>Score</span>
+          <strong>${Number(entry.score || 0)} / ${Number(entry.max_score || 0)}</strong>
+        </div>
+        <div>
+          <span>Visibility</span>
+          <strong>Public</strong>
+        </div>
+        <div>
+          <span>Submitted</span>
+          <strong>${escapeHtml(formatDateLabel(submittedAt))}</strong>
+        </div>
+      </div>
+
+      <section class="public-pick-section">
+        <h3>Knockout Progression</h3>
+        ${renderPublicRounds(entry.bracket.rounds)}
+      </section>
+
+      <section class="public-pick-section">
+        <h3>Best Thirds</h3>
+        ${renderPublicBestThirds(groups)}
+      </section>
+
+      <section class="public-pick-section">
+        <h3>Group Picks</h3>
+        ${renderPublicGroups(groups)}
+      </section>
+    `;
+    els.pickModal.hidden = false;
+    els.closePickModalButton.focus();
+  }
+
+  function closePublicPicks() {
+    els.pickModal.hidden = true;
   }
 
   function renderGroups() {
@@ -915,15 +1106,18 @@
   function currentSubmissionPayload() {
     const bracket = buildBracket();
     const champion = bracket.matchesById["104"]?.winner?.name || "";
+    const visibility = selectedVisibility();
 
     return {
       displayName: els.displayNameInput.value,
       champion,
+      visibility,
       bracket: {
         groups: state.groups,
         picks: state.picks,
         bestThirdMap: bracket.assignment.row,
         champion: champion || null,
+        visibility,
         rounds: {
           round16: roundWinners(bracket, "round32"),
           quarterfinals: roundWinners(bracket, "round16"),
@@ -1053,6 +1247,20 @@
     setMatchPick(button.dataset.matchId, button.dataset.side);
   });
 
+  els.leaderboardList.addEventListener("click", (event) => {
+    const button = event.target.closest(
+      "button[data-action='view-public-picks']",
+    );
+    if (!button) return;
+    openPublicPicks(button.dataset.entryId);
+  });
+
+  els.closePickModalButton.addEventListener("click", closePublicPicks);
+
+  els.pickModal.addEventListener("click", (event) => {
+    if (event.target === els.pickModal) closePublicPicks();
+  });
+
   els.viewButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.activeView = button.dataset.view;
@@ -1106,6 +1314,10 @@
     renderConnectors.frame = window.requestAnimationFrame(() => {
       renderConnectors(displayRounds(buildBracket()));
     });
+  });
+
+  window.addEventListener("keydown", (event) => {
+    if (event.key === "Escape" && !els.pickModal.hidden) closePublicPicks();
   });
 
   render();

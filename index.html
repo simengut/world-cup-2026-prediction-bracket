@@ -109,6 +109,16 @@
                   <span aria-hidden="true">✓</span>
                   Submit Picks
                 </button>
+                <div class="visibility-toggle" role="radiogroup" aria-label="Pick visibility">
+                  <label class="visibility-option">
+                    <input type="radio" name="pickVisibility" value="private" checked />
+                    <span>Private</span>
+                  </label>
+                  <label class="visibility-option">
+                    <input type="radio" name="pickVisibility" value="public" />
+                    <span>Public</span>
+                  </label>
+                </div>
               </form>
             </section>
             <div class="champion-strip" id="championStrip"></div>
@@ -165,6 +175,20 @@
     </div>
 
     <div class="toast" id="toast" aria-live="polite"></div>
+    <div class="pick-modal" id="pickModal" hidden>
+      <div class="pick-modal-card" role="dialog" aria-modal="true" aria-labelledby="pickModalTitle">
+        <div class="pick-modal-head">
+          <div>
+            <span>Public picks</span>
+            <h2 id="pickModalTitle">Bracket</h2>
+          </div>
+          <button class="icon-button" id="closePickModalButton" type="button" aria-label="Close public picks">
+            ×
+          </button>
+        </div>
+        <div class="pick-modal-body" id="pickModalBody"></div>
+      </div>
+    </div>
 
     <script src="vendor/xlsx.full.min.js" defer></script>
     <script src="template-data.js" defer></script>
