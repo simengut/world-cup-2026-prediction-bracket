@@ -17,7 +17,7 @@ export async function ensureSchema() {
       display_name text not null,
       champion text,
       bracket jsonb not null,
-      is_public boolean not null default false,
+      is_public boolean not null default true,
       score integer not null default 0,
       created_at timestamptz not null default now(),
       updated_at timestamptz not null default now()
@@ -26,7 +26,18 @@ export async function ensureSchema() {
 
   await sql`
     alter table submissions
-      add column if not exists is_public boolean not null default false
+      add column if not exists is_public boolean not null default true
+  `;
+
+  await sql`
+    alter table submissions
+      alter column is_public set default true
+  `;
+
+  await sql`
+    update submissions
+      set is_public = true
+      where is_public = false
   `;
 
   await sql`

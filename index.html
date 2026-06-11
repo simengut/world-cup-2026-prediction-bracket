@@ -109,16 +109,6 @@
                   <span aria-hidden="true">✓</span>
                   Submit Picks
                 </button>
-                <div class="visibility-toggle" role="radiogroup" aria-label="Pick visibility">
-                  <label class="visibility-option">
-                    <input type="radio" name="pickVisibility" value="private" checked />
-                    <span>Private</span>
-                  </label>
-                  <label class="visibility-option">
-                    <input type="radio" name="pickVisibility" value="public" />
-                    <span>Public</span>
-                  </label>
-                </div>
               </form>
             </section>
             <div class="champion-strip" id="championStrip"></div>
@@ -187,6 +177,25 @@
           </button>
         </div>
         <div class="pick-modal-body" id="pickModalBody"></div>
+      </div>
+    </div>
+    <div class="confirm-modal" id="submitConfirmModal" hidden>
+      <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="submitConfirmTitle">
+        <div class="confirm-copy">
+          <span>Public submission</span>
+          <h2 id="submitConfirmTitle">Add picks to leaderboard?</h2>
+          <p>
+            Adding your picks to the database makes your name and bracket visible to all visitors on this website.
+          </p>
+        </div>
+        <div class="confirm-actions">
+          <button class="control-button" id="cancelSubmitConfirmButton" type="button">
+            Cancel
+          </button>
+          <button class="control-button primary" id="confirmSubmitButton" type="button">
+            Add Picks
+          </button>
+        </div>
       </div>
     </div>
 

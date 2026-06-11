@@ -101,9 +101,6 @@
     exportButton: document.querySelector("#exportButton"),
     submitForm: document.querySelector("#submitForm"),
     displayNameInput: document.querySelector("#displayNameInput"),
-    visibilityInputs: Array.from(
-      document.querySelectorAll('input[name="pickVisibility"]'),
-    ),
     submitPicksButton: document.querySelector("#submitPicksButton"),
     submitStatus: document.querySelector("#submitStatus"),
     leaderboardList: document.querySelector("#leaderboardList"),
@@ -112,6 +109,9 @@
     pickModalTitle: document.querySelector("#pickModalTitle"),
     pickModalBody: document.querySelector("#pickModalBody"),
     closePickModalButton: document.querySelector("#closePickModalButton"),
+    submitConfirmModal: document.querySelector("#submitConfirmModal"),
+    cancelSubmitConfirmButton: document.querySelector("#cancelSubmitConfirmButton"),
+    confirmSubmitButton: document.querySelector("#confirmSubmitButton"),
     viewButtons: Array.from(document.querySelectorAll("[data-view]")),
     groupsView: document.querySelector("#groupsView"),
     bracketView: document.querySelector("#bracketView"),
@@ -146,18 +146,6 @@
         referrerpolicy="no-referrer"
       />
     `;
-  }
-
-  function selectedVisibility() {
-    const checked = els.visibilityInputs.find((input) => input.checked);
-    return checked?.value === "public" ? "public" : "private";
-  }
-
-  function setVisibility(value) {
-    const nextValue = value === "public" ? "public" : "private";
-    els.visibilityInputs.forEach((input) => {
-      input.checked = input.value === nextValue;
-    });
   }
 
   function normalizeStoredGroups(groups) {
@@ -225,7 +213,6 @@
           importStatus: state.importStatus,
           activeView: state.activeView,
           displayName: els.displayNameInput.value,
-          visibility: selectedVisibility(),
         }),
       );
     } catch (error) {
@@ -251,7 +238,6 @@
       state.importStatus = String(draft.importStatus || "Saved draft").slice(0, 40);
       state.activeView = draft.activeView === "groups" ? "groups" : "bracket";
       els.displayNameInput.value = String(draft.displayName || "").slice(0, 60);
-      setVisibility(draft.visibility);
       return true;
     } catch (error) {
       console.warn("Draft restore failed", error);
@@ -574,7 +560,7 @@
         const scoreLabel = entry.max_score
           ? `${Number(entry.score || 0)} / ${Number(entry.max_score)}`
           : Number(entry.score || 0);
-        const isPublic = Boolean(entry.is_public && entry.bracket);
+        const canView = Boolean(entry.bracket);
         return `
           <div class="leaderboard-row">
             <span class="rank-badge">${index + 1}</span>
@@ -585,9 +571,9 @@
             <div class="leaderboard-actions">
               <span class="score-pill">${escapeHtml(scoreLabel)}</span>
               ${
-                isPublic
+                canView
                   ? `<button class="mini-button" type="button" data-action="view-public-picks" data-entry-id="${escapeHtml(entry.id)}">View</button>`
-                  : '<span class="privacy-pill">Private</span>'
+                  : '<span class="unavailable-pill">No picks</span>'
               }
             </div>
           </div>
@@ -705,8 +691,8 @@
       (candidate) => String(candidate.id) === String(entryId),
     );
 
-    if (!entry?.is_public || !entry.bracket) {
-      showToast("That submission is private.");
+    if (!entry?.bracket) {
+      showToast("Picks are not available for that submission.");
       return;
     }
 
@@ -727,10 +713,6 @@
         <div>
           <span>Score</span>
           <strong>${Number(entry.score || 0)} / ${Number(entry.max_score || 0)}</strong>
-        </div>
-        <div>
-          <span>Visibility</span>
-          <strong>Public</strong>
         </div>
         <div>
           <span>Submitted</span>
@@ -759,6 +741,24 @@
 
   function closePublicPicks() {
     els.pickModal.hidden = true;
+  }
+
+  let submitConfirmResolve = null;
+
+  function confirmPublicSubmission() {
+    return new Promise((resolve) => {
+      submitConfirmResolve = resolve;
+      els.submitConfirmModal.hidden = false;
+      els.confirmSubmitButton.focus();
+    });
+  }
+
+  function resolveSubmitConfirmation(confirmed) {
+    if (!submitConfirmResolve) return;
+    els.submitConfirmModal.hidden = true;
+    const resolve = submitConfirmResolve;
+    submitConfirmResolve = null;
+    resolve(confirmed);
   }
 
   function renderGroups() {
@@ -1216,18 +1216,15 @@
   function currentSubmissionPayload() {
     const bracket = buildBracket();
     const champion = bracket.matchesById["104"]?.winner?.name || "";
-    const visibility = selectedVisibility();
 
     return {
       displayName: els.displayNameInput.value,
       champion,
-      visibility,
       bracket: {
         groups: state.groups,
         picks: state.picks,
         bestThirdMap: bracket.assignment.row,
         champion: champion || null,
-        visibility,
         rounds: {
           round16: roundWinners(bracket, "round32"),
           quarterfinals: roundWinners(bracket, "round16"),
@@ -1309,6 +1306,9 @@
       return;
     }
 
+    const confirmed = await confirmPublicSubmission();
+    if (!confirmed) return;
+
     state.submitting = true;
     updateSubmitState();
 
@@ -1371,6 +1371,20 @@
     if (event.target === els.pickModal) closePublicPicks();
   });
 
+  els.cancelSubmitConfirmButton.addEventListener("click", () => {
+    resolveSubmitConfirmation(false);
+  });
+
+  els.confirmSubmitButton.addEventListener("click", () => {
+    resolveSubmitConfirmation(true);
+  });
+
+  els.submitConfirmModal.addEventListener("click", (event) => {
+    if (event.target === els.submitConfirmModal) {
+      resolveSubmitConfirmation(false);
+    }
+  });
+
   els.viewButtons.forEach((button) => {
     button.addEventListener("click", () => {
       state.activeView = button.dataset.view;
@@ -1420,10 +1434,6 @@
     saveDraft();
   });
 
-  els.visibilityInputs.forEach((input) => {
-    input.addEventListener("change", saveDraft);
-  });
-
   els.refreshLeaderboardButton.addEventListener("click", loadLeaderboard);
 
   window.addEventListener("resize", () => {
@@ -1435,6 +1445,9 @@
 
   window.addEventListener("keydown", (event) => {
     if (event.key === "Escape" && !els.pickModal.hidden) closePublicPicks();
+    if (event.key === "Escape" && !els.submitConfirmModal.hidden) {
+      resolveSubmitConfirmation(false);
+    }
   });
 
   const draftRestored = restoreDraft();

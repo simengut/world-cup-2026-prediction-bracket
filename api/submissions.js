@@ -91,7 +91,6 @@ export default async function handler(req, res) {
     const displayName = cleanDisplayName(body.displayName);
     const bracket = body.bracket;
     const champion = String(body.champion || "").trim().slice(0, 80);
-    const isPublic = body.visibility === "public" || body.isPublic === true;
     const bracketJson = JSON.stringify(bracket);
 
     if (!displayName) {
@@ -113,7 +112,7 @@ export default async function handler(req, res) {
     const score = scoreBracket(bracket).score;
     const [submission] = await query`
       insert into submissions (id, display_name, champion, bracket, is_public, score)
-      values (${id}, ${displayName}, ${champion || null}, ${bracketJson}::jsonb, ${isPublic}, ${score})
+      values (${id}, ${displayName}, ${champion || null}, ${bracketJson}::jsonb, true, ${score})
       returning id, display_name, champion, is_public, score, created_at, updated_at
     `;
 
