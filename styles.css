@@ -338,6 +338,43 @@ h1 {
   font-weight: 760;
 }
 
+.submission-panel {
+  width: min(100%, 540px);
+  padding: 12px;
+  margin-bottom: 10px;
+}
+
+.submission-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.submission-heading h2 {
+  margin: 0;
+  font-size: 1rem;
+}
+
+.submission-heading .panel-note {
+  max-width: 240px;
+  text-align: right;
+}
+
+.submission-panel .submit-form {
+  grid-template-columns: minmax(0, 1fr) 142px;
+  align-items: end;
+  gap: 6px 8px;
+}
+
+.submission-panel .field-label {
+  grid-column: 1 / -1;
+}
+
+.submission-panel .control-button {
+  width: auto;
+}
+
 .leaderboard-row {
   display: grid;
   min-height: 48px;
@@ -838,6 +875,24 @@ h1 {
   .champion-strip {
     align-items: stretch;
     flex-direction: column;
+  }
+
+  .submission-panel {
+    width: 100%;
+  }
+
+  .submission-heading {
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .submission-heading .panel-note {
+    max-width: none;
+    text-align: left;
+  }
+
+  .submission-panel .submit-form {
+    grid-template-columns: 1fr;
   }
 
   .header-actions {
