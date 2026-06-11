@@ -434,6 +434,19 @@ h1 {
   min-width: 0;
 }
 
+.workspace-top {
+  display: grid;
+  grid-template-columns: minmax(360px, 540px) minmax(320px, 1fr);
+  gap: 10px;
+  align-items: stretch;
+  margin-bottom: 10px;
+}
+
+.workspace-top .submission-panel,
+.workspace-top .champion-strip {
+  margin-bottom: 0;
+}
+
 .view-bar {
   min-height: 44px;
   margin-bottom: 10px;
@@ -892,6 +905,10 @@ h1 {
   }
 
   .submission-panel .submit-form {
+    grid-template-columns: 1fr;
+  }
+
+  .workspace-top {
     grid-template-columns: 1fr;
   }
 

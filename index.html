@@ -87,29 +87,32 @@
         </aside>
 
         <section class="workspace">
-          <section class="summary-panel submission-panel" aria-label="Submit picks">
-            <div class="submission-heading">
-              <h2>Submit Picks</h2>
-              <div class="panel-note" id="submitStatus">Not submitted</div>
-            </div>
-            <form class="submit-form" id="submitForm">
-              <label class="field-label" for="displayNameInput">Name</label>
-              <input
-                class="text-input"
-                id="displayNameInput"
-                name="displayName"
-                type="text"
-                maxlength="60"
-                autocomplete="name"
-                placeholder="Your name"
-                required
-              />
-              <button class="control-button primary wide" id="submitPicksButton" type="submit">
-                <span aria-hidden="true">✓</span>
-                Submit Picks
-              </button>
-            </form>
-          </section>
+          <div class="workspace-top">
+            <section class="summary-panel submission-panel" aria-label="Submit picks">
+              <div class="submission-heading">
+                <h2>Submit Picks</h2>
+                <div class="panel-note" id="submitStatus">Not submitted</div>
+              </div>
+              <form class="submit-form" id="submitForm">
+                <label class="field-label" for="displayNameInput">Name</label>
+                <input
+                  class="text-input"
+                  id="displayNameInput"
+                  name="displayName"
+                  type="text"
+                  maxlength="60"
+                  autocomplete="name"
+                  placeholder="Your name"
+                  required
+                />
+                <button class="control-button primary wide" id="submitPicksButton" type="submit">
+                  <span aria-hidden="true">✓</span>
+                  Submit Picks
+                </button>
+              </form>
+            </section>
+            <div class="champion-strip" id="championStrip"></div>
+          </div>
 
           <div class="view-bar">
             <div class="segmented-control" role="tablist" aria-label="Views">
@@ -155,7 +158,6 @@
             role="tabpanel"
             aria-labelledby="bracketTab"
           >
-            <div class="champion-strip" id="championStrip"></div>
             <div class="bracket-board" id="bracketBoard"></div>
           </section>
         </section>
