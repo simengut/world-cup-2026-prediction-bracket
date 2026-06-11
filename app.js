@@ -20,6 +20,7 @@
   const TOTAL_KNOCKOUT_PICKS = 31;
   const FLAG_BASE = "vendor/flags";
   const STORAGE_KEY = "wc2026-prediction-draft";
+  const MY_SUBMISSION_KEY = "wc2026-my-submission";
   const STORAGE_VERSION = 1;
   const FLAG_CODES = {
     "Algerie": "dz",
@@ -84,6 +85,7 @@
     submitting: false,
     publicView: null,
     privateDraft: null,
+    mySubmissionId: "",
   };
 
   const els = {
@@ -259,6 +261,28 @@
         <span class="team-name">${escapeHtml(teamName)}</span>
       </span>
     `;
+  }
+
+  function loadMySubmissionId() {
+    try {
+      return String(localStorage.getItem(MY_SUBMISSION_KEY) || "");
+    } catch (error) {
+      console.warn("My submission restore failed", error);
+      return "";
+    }
+  }
+
+  function setMySubmission(entryId) {
+    state.mySubmissionId = String(entryId || "");
+    try {
+      if (state.mySubmissionId) {
+        localStorage.setItem(MY_SUBMISSION_KEY, state.mySubmissionId);
+      } else {
+        localStorage.removeItem(MY_SUBMISSION_KEY);
+      }
+    } catch (error) {
+      console.warn("My submission save failed", error);
+    }
   }
 
   function groupById(groupId) {
@@ -579,8 +603,9 @@
           ? `${Number(entry.score || 0)} / ${Number(entry.max_score)}`
           : Number(entry.score || 0);
         const canView = Boolean(entry.bracket);
+        const isMine = state.mySubmissionId === String(entry.id);
         return `
-          <div class="leaderboard-row">
+          <div class="leaderboard-row ${isMine ? "is-mine" : ""}">
             <span class="rank-badge">${index + 1}</span>
             <div class="leaderboard-main">
               <strong>${escapeHtml(entry.display_name)}</strong>
@@ -592,6 +617,11 @@
                 canView
                   ? `<button class="mini-button" type="button" data-action="view-public-picks" data-entry-id="${escapeHtml(entry.id)}">View</button>`
                   : '<span class="unavailable-pill">No picks</span>'
+              }
+              ${
+                isMine
+                  ? '<span class="mine-pill">You</span>'
+                  : `<button class="mini-button ghost" type="button" data-action="mark-my-picks" data-entry-id="${escapeHtml(entry.id)}">This is me</button>`
               }
             </div>
           </div>
@@ -1384,6 +1414,9 @@
         throw new Error(payload.message || payload.error || "Submission failed");
       }
 
+      if (payload.submission?.id) {
+        setMySubmission(payload.submission.id);
+      }
       els.submitStatus.textContent = "Submitted";
       showToast("Picks submitted.");
       await loadLeaderboard();
@@ -1415,11 +1448,18 @@
   });
 
   els.leaderboardList.addEventListener("click", (event) => {
-    const button = event.target.closest(
-      "button[data-action='view-public-picks']",
-    );
+    const button = event.target.closest("button[data-action]");
     if (!button) return;
-    openPublicPicks(button.dataset.entryId);
+
+    if (button.dataset.action === "view-public-picks") {
+      openPublicPicks(button.dataset.entryId);
+    }
+
+    if (button.dataset.action === "mark-my-picks") {
+      setMySubmission(button.dataset.entryId);
+      renderLeaderboard();
+      showToast("Marked as your picks.");
+    }
   });
 
   els.closePickModalButton.addEventListener("click", closePublicPicks);
@@ -1509,6 +1549,7 @@
     }
   });
 
+  state.mySubmissionId = loadMySubmissionId();
   const draftRestored = restoreDraft();
   render();
   if (draftRestored) showToast("Saved picks restored.");

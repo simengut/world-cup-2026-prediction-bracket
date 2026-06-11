@@ -422,6 +422,12 @@ h1 {
   gap: 4px;
 }
 
+.leaderboard-row.is-mine {
+  border-color: rgba(224, 170, 63, 0.72);
+  background: #fffaf0;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
 .score-pill {
   display: inline-flex;
   min-width: 40px;
@@ -437,6 +443,7 @@ h1 {
 }
 
 .mini-button,
+.mine-pill,
 .unavailable-pill {
   display: inline-flex;
   min-height: 22px;
@@ -453,6 +460,17 @@ h1 {
   background: #eaf5f2;
   color: var(--pitch-dark);
   cursor: pointer;
+}
+
+.mini-button.ghost {
+  border-color: rgba(24, 33, 31, 0.14);
+  background: #ffffff;
+  color: var(--muted);
+}
+
+.mine-pill {
+  background: #fff0c8;
+  color: #735211;
 }
 
 .unavailable-pill {
