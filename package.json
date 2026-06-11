@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "python3 -m http.server 5173",
-    "build": "mkdir -p dist/assets dist/vendor && cp index.html styles.css app.js template-data.js \"Tippin VM 2026 -mal.xlsx\" dist/ && cp assets/* dist/assets/ && cp -R vendor/* dist/vendor/"
+    "generate:data": "node scripts/generate_template_data.mjs \"Tipping VM 2026.xlsx\" template-data.js",
+    "build": "mkdir -p dist/assets dist/vendor && cp index.html styles.css app.js template-data.js \"Tipping VM 2026.xlsx\" dist/ && cp assets/* dist/assets/ && cp -R vendor/* dist/vendor/"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0"

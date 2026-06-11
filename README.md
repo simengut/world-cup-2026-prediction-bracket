@@ -1,6 +1,6 @@
 # World Cup 2026 Prediction Bracket
 
-Static Vercel-ready bracket app generated from `Tippin VM 2026 -mal.xlsx`.
+Static Vercel-ready bracket app generated from `Tipping VM 2026.xlsx`.
 
 ## Local preview
 
@@ -9,6 +9,12 @@ python3 -m http.server 5173
 ```
 
 Open `http://localhost:5173`.
+
+If the Excel template changes, replace `Tipping VM 2026.xlsx` and run:
+
+```sh
+npm run generate:data
+```
 
 ## Vercel
 

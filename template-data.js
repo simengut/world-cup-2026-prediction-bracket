@@ -1,5 +1,5 @@
 window.WC_TEMPLATE_DATA = {
-  "sourceFile": "Tippin VM 2026 -mal.xlsx",
+  "sourceFile": "Tipping VM 2026.xlsx",
   "annexHeaders": [
     "1A",
     "1B",
@@ -14,7 +14,7 @@ window.WC_TEMPLATE_DATA = {
     {
       "id": "A",
       "name": "Group A",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "A1",
@@ -24,17 +24,17 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "A2",
           "name": "Sør-Afrika",
-          "rank": 4
+          "rank": 2
         },
         {
           "id": "A3",
           "name": "Sør-Korea",
-          "rank": 2
+          "rank": 3
         },
         {
           "id": "A4",
           "name": "Tsjekkia",
-          "rank": 3
+          "rank": 4
         }
       ]
     },
@@ -46,29 +46,29 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "B1",
           "name": "Canada",
-          "rank": 2
+          "rank": 1
         },
         {
           "id": "B2",
           "name": "Bosnia-Hercegovina",
-          "rank": 3
+          "rank": 2
         },
         {
           "id": "B3",
           "name": "Qatar",
-          "rank": 4
+          "rank": 3
         },
         {
           "id": "B4",
           "name": "Sveits",
-          "rank": 1
+          "rank": 4
         }
       ]
     },
     {
       "id": "C",
       "name": "Group C",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "C1",
@@ -95,7 +95,7 @@ window.WC_TEMPLATE_DATA = {
     {
       "id": "D",
       "name": "Group D",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "D1",
@@ -105,24 +105,24 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "D2",
           "name": "Paraguay",
-          "rank": 3
+          "rank": 2
         },
         {
           "id": "D3",
           "name": "Australia",
-          "rank": 4
+          "rank": 3
         },
         {
           "id": "D4",
           "name": "Tyrkia",
-          "rank": 2
+          "rank": 4
         }
       ]
     },
     {
       "id": "E",
       "name": "Group E",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "E1",
@@ -149,7 +149,7 @@ window.WC_TEMPLATE_DATA = {
     {
       "id": "F",
       "name": "Group F",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "F1",
@@ -164,19 +164,19 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "F3",
           "name": "Tunisia",
-          "rank": 4
+          "rank": 3
         },
         {
           "id": "F4",
           "name": "Sverige",
-          "rank": 3
+          "rank": 4
         }
       ]
     },
     {
       "id": "G",
       "name": "Group G",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "G1",
@@ -218,19 +218,19 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "H3",
           "name": "Saudi-Arabia",
-          "rank": 4
+          "rank": 3
         },
         {
           "id": "H4",
           "name": "Kapp Verde",
-          "rank": 3
+          "rank": 4
         }
       ]
     },
     {
       "id": "I",
       "name": "Group I",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "I1",
@@ -240,12 +240,12 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "I2",
           "name": "Senegal",
-          "rank": 3
+          "rank": 2
         },
         {
           "id": "I3",
           "name": "Norge",
-          "rank": 2
+          "rank": 3
         },
         {
           "id": "I4",
@@ -257,7 +257,7 @@ window.WC_TEMPLATE_DATA = {
     {
       "id": "J",
       "name": "Group J",
-      "bestThird": true,
+      "bestThird": false,
       "teams": [
         {
           "id": "J1",
@@ -267,12 +267,12 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "J2",
           "name": "Algerie",
-          "rank": 3
+          "rank": 2
         },
         {
           "id": "J3",
           "name": "Østerrike",
-          "rank": 2
+          "rank": 3
         },
         {
           "id": "J4",
@@ -294,17 +294,17 @@ window.WC_TEMPLATE_DATA = {
         {
           "id": "K2",
           "name": "DR Kongo",
-          "rank": 3
+          "rank": 2
         },
         {
           "id": "K3",
           "name": "Usbekistan",
-          "rank": 4
+          "rank": 3
         },
         {
           "id": "K4",
           "name": "Colombia",
-          "rank": 2
+          "rank": 4
         }
       ]
     },
@@ -6940,37 +6940,5 @@ window.WC_TEMPLATE_DATA = {
       }
     ]
   },
-  "defaultPicks": {
-    "73": "away",
-    "74": "home",
-    "75": "home",
-    "76": "home",
-    "77": "home",
-    "78": "away",
-    "79": "home",
-    "80": "home",
-    "81": "home",
-    "82": "home",
-    "83": "home",
-    "84": "home",
-    "85": "home",
-    "86": "home",
-    "87": "home",
-    "88": "home",
-    "89": "away",
-    "90": "away",
-    "91": "home",
-    "92": "away",
-    "93": "away",
-    "94": "away",
-    "95": "home",
-    "96": "away",
-    "97": "away",
-    "98": "home",
-    "99": "away",
-    "100": "home",
-    "101": "away",
-    "102": "away",
-    "104": "home"
-  }
+  "defaultPicks": {}
 };
