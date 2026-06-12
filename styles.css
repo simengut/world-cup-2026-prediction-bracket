@@ -551,7 +551,7 @@ h1 {
 
 .segmented-control {
   display: inline-grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(3, 1fr);
   overflow: hidden;
   border: 1px solid var(--line);
   border-radius: 8px;
@@ -583,6 +583,156 @@ h1 {
   display: grid;
   grid-template-columns: repeat(3, minmax(220px, 1fr));
   gap: 10px;
+}
+
+.schedule-panel {
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #ffffff;
+  box-shadow: var(--shadow);
+}
+
+.schedule-head {
+  position: sticky;
+  top: 0;
+  z-index: 2;
+  display: flex;
+  min-height: 62px;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 12px;
+  border-bottom: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.96);
+}
+
+.schedule-head span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.schedule-head h2 {
+  margin: 3px 0 0;
+  font-size: 1.05rem;
+}
+
+.schedule-meta {
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-align: right;
+}
+
+.schedule-list {
+  display: grid;
+  gap: 8px;
+  padding: 12px;
+}
+
+.schedule-day {
+  position: sticky;
+  top: 63px;
+  z-index: 1;
+  margin: 6px 0 0;
+  padding: 8px 0 4px;
+  background: #ffffff;
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 950;
+  text-transform: uppercase;
+}
+
+.schedule-match {
+  display: grid;
+  min-height: 76px;
+  grid-template-columns: 74px minmax(0, 1fr) 72px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: #fbfdfc;
+}
+
+.schedule-match.is-next {
+  border-color: rgba(224, 170, 63, 0.8);
+  background: #fffaf0;
+  box-shadow: inset 3px 0 0 var(--gold);
+}
+
+.schedule-match.is-past {
+  opacity: 0.62;
+}
+
+.schedule-time {
+  display: grid;
+  gap: 3px;
+}
+
+.schedule-time strong {
+  font-size: 1.15rem;
+  line-height: 1;
+}
+
+.schedule-time span,
+.schedule-match-main > span {
+  color: var(--muted);
+  font-size: 0.74rem;
+  font-weight: 800;
+}
+
+.schedule-match-main {
+  display: grid;
+  min-width: 0;
+  gap: 5px;
+}
+
+.schedule-match-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.schedule-match-main > strong {
+  overflow: hidden;
+  font-size: 0.96rem;
+  line-height: 1.15;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.next-badge {
+  display: inline-flex;
+  min-height: 22px;
+  align-items: center;
+  padding: 0 8px;
+  border-radius: 999px;
+  background: var(--gold);
+  color: var(--ink);
+  font-size: 0.68rem;
+  font-weight: 950;
+}
+
+.schedule-result {
+  display: grid;
+  justify-items: end;
+  text-align: right;
+}
+
+.schedule-result strong {
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.schedule-result span {
+  margin-top: 4px;
+  color: var(--muted);
+  font-size: 0.66rem;
+  font-weight: 900;
+  text-transform: uppercase;
 }
 
 .group-card {
@@ -1375,6 +1525,10 @@ h1 {
     grid-template-columns: 1fr 1fr;
   }
 
+  .schedule-match {
+    grid-template-columns: 66px minmax(0, 1fr) 62px;
+  }
+
   .public-pick-hero,
   .public-rounds-grid,
   .public-groups-grid,
@@ -1391,6 +1545,37 @@ h1 {
 
   .pick-modal {
     padding: 12px;
+  }
+
+  .segmented-control {
+    width: 100%;
+  }
+
+  .segment {
+    min-width: 0;
+    padding: 0 8px;
+  }
+
+  .schedule-head {
+    align-items: flex-start;
+    flex-direction: column;
+  }
+
+  .schedule-meta {
+    text-align: left;
+  }
+
+  .schedule-match {
+    grid-template-columns: 1fr;
+  }
+
+  .schedule-result {
+    justify-items: start;
+    text-align: left;
+  }
+
+  .schedule-match-main > strong {
+    white-space: normal;
   }
 
   .public-pick-hero,

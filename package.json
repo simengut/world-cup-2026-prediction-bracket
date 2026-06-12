@@ -6,7 +6,7 @@
   "scripts": {
     "dev": "python3 -m http.server 5173",
     "generate:data": "node scripts/generate_template_data.mjs \"Tipping VM 2026.xlsx\" template-data.js",
-    "build": "mkdir -p dist/assets dist/vendor && cp index.html styles.css app.js template-data.js \"Tipping VM 2026.xlsx\" dist/ && cp assets/* dist/assets/ && cp -R vendor/* dist/vendor/"
+    "build": "mkdir -p dist/assets dist/vendor && cp index.html styles.css app.js template-data.js schedule-data.js \"Tipping VM 2026.xlsx\" dist/ && cp assets/* dist/assets/ && cp -R vendor/* dist/vendor/"
   },
   "dependencies": {
     "@neondatabase/serverless": "^1.1.0"

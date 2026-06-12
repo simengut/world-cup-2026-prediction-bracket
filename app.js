@@ -1,5 +1,6 @@
 (function () {
   const DATA = window.WC_TEMPLATE_DATA;
+  const SCHEDULE_ROWS = window.WC_MATCH_SCHEDULE || [];
   const ROUND_META = [
     { key: "round32", label: "Round of 32" },
     { key: "round16", label: "Round of 16" },
@@ -22,6 +23,7 @@
   const STORAGE_KEY = "wc2026-prediction-draft";
   const MY_SUBMISSION_KEY = "wc2026-my-submission";
   const STORAGE_VERSION = 1;
+  const ET_OFFSET_HOURS = 4;
   const FLAG_CODES = {
     "Algerie": "dz",
     "Argentina": "ar",
@@ -82,6 +84,7 @@
     importStatus: "Workbook",
     leaderboard: [],
     leaderboardStatus: "Loading leaderboard",
+    scheduleResults: {},
     submitting: false,
     publicView: null,
     privateDraft: null,
@@ -90,7 +93,6 @@
 
   const els = {
     headerMeta: document.querySelector("#headerMeta"),
-    importBadge: document.querySelector("#importBadge"),
     metricsGrid: document.querySelector("#metricsGrid"),
     thirdCounter: document.querySelector("#thirdCounter"),
     thirdList: document.querySelector("#thirdList"),
@@ -112,6 +114,8 @@
     returnToDraftButton: document.querySelector("#returnToDraftButton"),
     leaderboardList: document.querySelector("#leaderboardList"),
     refreshLeaderboardButton: document.querySelector("#refreshLeaderboardButton"),
+    scheduleList: document.querySelector("#scheduleList"),
+    scheduleMeta: document.querySelector("#scheduleMeta"),
     pickModal: document.querySelector("#pickModal"),
     pickModalTitle: document.querySelector("#pickModalTitle"),
     pickModalBody: document.querySelector("#pickModalBody"),
@@ -122,6 +126,7 @@
     viewButtons: Array.from(document.querySelectorAll("[data-view]")),
     groupsView: document.querySelector("#groupsView"),
     bracketView: document.querySelector("#bracketView"),
+    scheduleView: document.querySelector("#scheduleView"),
   };
 
   function clone(value) {
@@ -245,7 +250,11 @@
       state.picks = picks;
       state.importName = String(draft.importName || DATA.sourceFile).slice(0, 100);
       state.importStatus = String(draft.importStatus || "Saved draft").slice(0, 40);
-      state.activeView = draft.activeView === "groups" ? "groups" : "bracket";
+      state.activeView = ["groups", "bracket", "schedule"].includes(
+        draft.activeView,
+      )
+        ? draft.activeView
+        : "bracket";
       els.displayNameInput.value = String(draft.displayName || "").slice(0, 60);
       return true;
     } catch (error) {
@@ -638,6 +647,79 @@
       month: "short",
       day: "numeric",
       hour: "2-digit",
+      minute: "2-digit",
+    }).format(date);
+  }
+
+  function parseScheduleTime(timeText) {
+    const match = String(timeText || "").match(/^(\d{2}):(\d{2})$/);
+    if (!match) return { hour: 0, minute: 0 };
+
+    const hour = Number(match[1]);
+    const minute = Number(match[2]);
+    return { hour, minute };
+  }
+
+  function normalizeScheduleName(value) {
+    const aliases = {
+      "Bosnia and Herzegovina": "Bosnia",
+      "Czech Republic": "Czechia",
+      "Korea Republic": "South Korea",
+      "Korea DPR": "North Korea",
+      "Côte d'Ivoire": "Ivory Coast",
+      "Cote d'Ivoire": "Ivory Coast",
+      "Türkiye": "Turkiye",
+    };
+    return String(aliases[value] || value || "")
+      .normalize("NFKD")
+      .replace(/[\u0300-\u036f]/g, "")
+      .replace(/[^a-z0-9]+/gi, " ")
+      .trim()
+      .toLowerCase();
+  }
+
+  function scheduleMatchKey(homeTeam, awayTeam) {
+    return `${normalizeScheduleName(homeTeam)}::${normalizeScheduleName(awayTeam)}`;
+  }
+
+  function scheduleDate(row) {
+    const [year, month, day] = row.date.split("-").map(Number);
+    const { hour, minute } = parseScheduleTime(row.timeET);
+    return new Date(Date.UTC(year, month - 1, day, hour + ET_OFFSET_HOURS, minute));
+  }
+
+  function scheduleRows() {
+    return SCHEDULE_ROWS.map((line, index) => {
+      const [date, stage, match, venue, timeET, score] = String(line).split("|");
+      const [homeTeam = "", awayTeam = ""] = match.split(" vs ");
+      const row = {
+        id: index + 1,
+        date,
+        stage,
+        match,
+        venue,
+        timeET,
+        score: state.scheduleResults[scheduleMatchKey(homeTeam, awayTeam)] || score,
+      };
+      row.startsAt = scheduleDate(row);
+      return row;
+    }).sort((a, b) => a.startsAt - b.startsAt);
+  }
+
+  function formatScheduleDate(date, options = {}) {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: "Europe/Oslo",
+      weekday: options.short ? "short" : "long",
+      month: "short",
+      day: "numeric",
+    }).format(date);
+  }
+
+  function formatOsloTime(date) {
+    return new Intl.DateTimeFormat(undefined, {
+      timeZone: "Europe/Oslo",
+      hour: "2-digit",
+      hourCycle: "h23",
       minute: "2-digit",
     }).format(date);
   }
@@ -1049,11 +1131,59 @@
     }).join("");
   }
 
+  function renderSchedule() {
+    const rows = scheduleRows();
+    const now = new Date();
+    const nextIndex = rows.findIndex((row) => row.startsAt >= now);
+    const upcomingCount = rows.filter((row) => row.startsAt >= now).length;
+
+    els.scheduleMeta.textContent = `${upcomingCount || 0} upcoming · ${rows.length} total`;
+
+    if (!rows.length) {
+      els.scheduleList.innerHTML = '<div class="empty-state">No schedule loaded</div>';
+      return;
+    }
+
+    let currentDate = "";
+    els.scheduleList.innerHTML = rows
+      .map((row, index) => {
+        const dateKey = row.startsAt.toISOString().slice(0, 10);
+        const showDate = dateKey !== currentDate;
+        currentDate = dateKey;
+        const isNext = index === nextIndex;
+        const isPast = row.startsAt < now;
+
+        return `
+          ${showDate ? `<h3 class="schedule-day">${escapeHtml(formatScheduleDate(row.startsAt))}</h3>` : ""}
+          <article class="schedule-match ${isNext ? "is-next" : ""} ${isPast ? "is-past" : ""}">
+            <div class="schedule-time">
+              <strong>${escapeHtml(formatOsloTime(row.startsAt))}</strong>
+              <span>Oslo</span>
+            </div>
+            <div class="schedule-match-main">
+              <div class="schedule-match-top">
+                <span class="soft-badge">${escapeHtml(row.stage)}</span>
+                ${isNext ? '<span class="next-badge">Next</span>' : ""}
+              </div>
+              <strong>${escapeHtml(row.match)}</strong>
+              <span>${escapeHtml(row.venue)}</span>
+            </div>
+            <div class="schedule-result">
+              ${row.score ? `<strong>${escapeHtml(row.score)}</strong><span>Final</span>` : ""}
+            </div>
+          </article>
+        `;
+      })
+      .join("");
+  }
+
   function renderStatus(bracket) {
     const selectedThirds = selectedThirdCodes().length;
     els.headerMeta.textContent = `${state.importName} · ${selectedThirds}/8 best thirds`;
-    els.importBadge.textContent = state.importStatus;
-    els.inlineStatus.textContent = bracket.assignment.message;
+    els.inlineStatus.textContent =
+      state.activeView === "schedule"
+        ? `${SCHEDULE_ROWS.length} matches · Oslo time`
+        : bracket.assignment.message;
   }
 
   function renderViews() {
@@ -1065,6 +1195,7 @@
 
     els.groupsView.hidden = state.activeView !== "groups";
     els.bracketView.hidden = state.activeView !== "bracket";
+    els.scheduleView.hidden = state.activeView !== "schedule";
   }
 
   function renderPublicViewMode() {
@@ -1092,6 +1223,7 @@
     renderGroups();
     renderChampion(bracket);
     renderBracket(rounds);
+    renderSchedule();
     renderViews();
     renderConnectors(rounds);
     updateSubmitState();
@@ -1360,6 +1492,30 @@
     renderLeaderboard();
   }
 
+  async function loadWorldCupResults() {
+    if (!backendAvailableHere()) return;
+
+    try {
+      const response = await fetch("/api/worldcup-results", {
+        headers: { accept: "application/json" },
+      });
+      const payload = await readApiResponse(response);
+
+      if (!response.ok) return;
+
+      const results = {};
+      (payload.matches || []).forEach((match) => {
+        if (match.status !== "FINISHED" || !match.score) return;
+        results[scheduleMatchKey(match.homeTeam, match.awayTeam)] = match.score;
+      });
+
+      state.scheduleResults = results;
+      renderSchedule();
+    } catch (error) {
+      console.warn("World Cup results unavailable", error);
+    }
+  }
+
   async function submitPicks() {
     const displayName = els.displayNameInput.value.trim();
     const selectedThirds = selectedThirdCodes().length;
@@ -1554,4 +1710,5 @@
   render();
   if (draftRestored) showToast("Saved picks restored.");
   loadLeaderboard();
+  loadWorldCupResults();
 })();

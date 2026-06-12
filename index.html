@@ -44,7 +44,6 @@
           <section class="summary-panel">
             <div class="panel-heading">
               <h2>Status</h2>
-              <span id="importBadge" class="soft-badge">Workbook</span>
             </div>
             <div class="metrics-grid" id="metricsGrid"></div>
           </section>
@@ -147,6 +146,17 @@
               >
                 Bracket
               </button>
+              <button
+                class="segment"
+                id="scheduleTab"
+                type="button"
+                role="tab"
+                aria-controls="scheduleView"
+                aria-selected="false"
+                data-view="schedule"
+              >
+                Schedule
+              </button>
             </div>
             <div class="inline-status" id="inlineStatus">Ready</div>
           </div>
@@ -168,6 +178,25 @@
             aria-labelledby="bracketTab"
           >
             <div class="bracket-board" id="bracketBoard"></div>
+          </section>
+
+          <section
+            class="view-panel"
+            id="scheduleView"
+            role="tabpanel"
+            aria-labelledby="scheduleTab"
+            hidden
+          >
+            <div class="schedule-panel">
+              <div class="schedule-head">
+                <div>
+                  <span>Match schedule</span>
+                  <h2>Upcoming World Cup games</h2>
+                </div>
+                <div class="schedule-meta" id="scheduleMeta">104 matches</div>
+              </div>
+              <div class="schedule-list" id="scheduleList"></div>
+            </div>
           </section>
         </section>
       </main>
@@ -210,6 +239,7 @@
 
     <script src="vendor/xlsx.full.min.js" defer></script>
     <script src="template-data.js" defer></script>
+    <script src="schedule-data.js" defer></script>
     <script src="app.js" defer></script>
   </body>
 </html>

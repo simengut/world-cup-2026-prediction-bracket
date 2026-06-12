@@ -26,6 +26,7 @@ The app includes Vercel Functions for submissions and leaderboard data:
 
 - `POST /api/submissions`
 - `GET /api/leaderboard`
+- `GET /api/worldcup-results`
 
 Connect a Neon Postgres database through Vercel Marketplace so Vercel sets `DATABASE_URL` or `POSTGRES_URL`.
 The current Vercel project is connected to a Neon Free database resource named `neon-cyan-river`.
@@ -43,3 +44,10 @@ Scoring is equal-weight by round: one point for each predicted team that is actu
 ```
 
 Use the same team names as the app. Missing rounds are ignored until results are available.
+
+## Match results API
+
+Final World Cup scores can be pulled from football-data.org through
+`/api/worldcup-results`. Set a Vercel environment variable named
+`FOOTBALL_DATA_API_TOKEN` with your football-data.org token. The token must stay
+server-side; do not add it to frontend files.
