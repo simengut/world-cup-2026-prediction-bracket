@@ -1,9 +1,9 @@
 <!doctype html>
-<html lang="en">
+<html lang="no">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>HH - NMBU FIFA World Cup Tipping</title>
+    <title>HH - NMBU FIFA VM-tipping</title>
     <link
       rel="icon"
       href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%230f6f4e'/%3E%3Ccircle cx='32' cy='32' r='18' fill='%23e0aa3f'/%3E%3C/svg%3E"
@@ -14,19 +14,19 @@
     <div class="app-shell">
       <header class="app-header">
         <div class="header-copy">
-          <p class="eyebrow">World Cup 2026</p>
-          <h1>HH - NMBU FIFA World Cup Tipping</h1>
-          <div class="header-meta" id="headerMeta">Template loaded</div>
+          <p class="eyebrow">VM 2026</p>
+          <h1>HH - NMBU FIFA VM-tipping</h1>
+          <div class="header-meta" id="headerMeta">Mal lastet</div>
         </div>
-        <div class="header-actions" aria-label="Bracket actions">
+        <div class="header-actions" aria-label="Handlinger">
           <label class="control-button primary" for="excelInput">
             <span aria-hidden="true">↥</span>
-            Upload Excel
+            Last opp Excel
           </label>
           <input id="excelInput" type="file" accept=".xlsx,.xls" hidden />
           <button class="control-button" id="resetButton" type="button">
             <span aria-hidden="true">↺</span>
-            Reset
+            Nullstill
           </button>
           <a
             class="control-button"
@@ -34,13 +34,13 @@
             download
           >
             <span aria-hidden="true">↓</span>
-            Template
+            Mal
           </a>
         </div>
       </header>
 
       <main class="app-layout">
-        <aside class="control-rail" aria-label="Prediction summary">
+        <aside class="control-rail" aria-label="Oppsummering">
           <section class="summary-panel">
             <div class="panel-heading">
               <h2>Status</h2>
@@ -50,7 +50,7 @@
 
           <section class="summary-panel">
             <div class="panel-heading">
-              <h2>Best Thirds</h2>
+              <h2>Beste treere</h2>
               <span id="thirdCounter" class="soft-badge">0 / 8</span>
             </div>
             <div class="third-list" id="thirdList"></div>
@@ -58,28 +58,28 @@
 
           <section class="summary-panel">
             <div class="panel-heading">
-              <h2>Leaderboard</h2>
-              <button class="icon-button" id="refreshLeaderboardButton" type="button" aria-label="Refresh leaderboard">
+              <h2>Resultatliste</h2>
+              <button class="icon-button" id="refreshLeaderboardButton" type="button" aria-label="Oppdater resultatlisten">
                 ↻
               </button>
             </div>
             <div class="leaderboard-list" id="leaderboardList">
-              <div class="empty-state">Loading leaderboard</div>
+              <div class="empty-state">Laster resultatliste</div>
             </div>
           </section>
 
           <section class="summary-panel">
             <div class="panel-heading">
-              <h2>Tools</h2>
+              <h2>Verktøy</h2>
             </div>
             <div class="tool-stack">
               <button class="control-button wide" id="clearKnockoutButton" type="button">
                 <span aria-hidden="true">×</span>
-                Clear Knockout
+                Tøm sluttspill
               </button>
               <button class="control-button wide" id="exportButton" type="button">
                 <span aria-hidden="true">⇩</span>
-                Export Picks
+                Eksporter tips
               </button>
             </div>
           </section>
@@ -87,13 +87,13 @@
 
         <section class="workspace">
           <div class="workspace-top">
-            <section class="summary-panel submission-panel" aria-label="Submit picks">
+            <section class="summary-panel submission-panel" aria-label="Send inn tips">
               <div class="submission-heading">
-                <h2>Submit Picks</h2>
-                <div class="panel-note" id="submitStatus">Not submitted</div>
+                <h2>Send inn tips</h2>
+                <div class="panel-note" id="submitStatus">Ikke sendt inn</div>
               </div>
               <form class="submit-form" id="submitForm">
-                <label class="field-label" for="displayNameInput">Name</label>
+                <label class="field-label" for="displayNameInput">Navn</label>
                 <input
                   class="text-input"
                   id="displayNameInput"
@@ -101,12 +101,12 @@
                   type="text"
                   maxlength="60"
                   autocomplete="name"
-                  placeholder="Your name"
+                  placeholder="Ditt navn"
                   required
                 />
                 <button class="control-button primary wide" id="submitPicksButton" type="submit">
                   <span aria-hidden="true">✓</span>
-                  Submit Picks
+                  Send inn tips
                 </button>
               </form>
             </section>
@@ -114,16 +114,16 @@
           </div>
           <div class="public-view-bar" id="publicViewBar" hidden>
             <div>
-              <span>Viewing public picks</span>
-              <strong id="publicViewTitle">Bracket</strong>
+              <span>Viser offentlige tips</span>
+              <strong id="publicViewTitle">Sluttspill</strong>
             </div>
             <button class="control-button" id="returnToDraftButton" type="button">
-              Back to your picks
+              Tilbake til dine tips
             </button>
           </div>
 
           <div class="view-bar">
-            <div class="segmented-control" role="tablist" aria-label="Views">
+            <div class="segmented-control" role="tablist" aria-label="Visninger">
               <button
                 class="segment"
                 id="groupsTab"
@@ -133,7 +133,7 @@
                 aria-selected="false"
                 data-view="groups"
               >
-                Groups
+                Grupper
               </button>
               <button
                 class="segment active"
@@ -144,7 +144,7 @@
                 aria-selected="true"
                 data-view="bracket"
               >
-                Bracket
+                Sluttspill
               </button>
               <button
                 class="segment"
@@ -155,10 +155,10 @@
                 aria-selected="false"
                 data-view="schedule"
               >
-                Schedule
+                Kamper
               </button>
             </div>
-            <div class="inline-status" id="inlineStatus">Ready</div>
+            <div class="inline-status" id="inlineStatus">Klar</div>
           </div>
 
           <section
@@ -190,10 +190,10 @@
             <div class="schedule-panel">
               <div class="schedule-head">
                 <div>
-                  <span>Match schedule</span>
-                  <h2>Upcoming World Cup games</h2>
+                  <span>Kampoppsett</span>
+                  <h2>Kommende VM-kamper</h2>
                 </div>
-                <div class="schedule-meta" id="scheduleMeta">104 matches</div>
+                <div class="schedule-meta" id="scheduleMeta">104 kamper</div>
               </div>
               <div class="schedule-list" id="scheduleList"></div>
             </div>
@@ -207,10 +207,10 @@
       <div class="pick-modal-card" role="dialog" aria-modal="true" aria-labelledby="pickModalTitle">
         <div class="pick-modal-head">
           <div>
-            <span>Public picks</span>
-            <h2 id="pickModalTitle">Bracket</h2>
+            <span>Offentlige tips</span>
+            <h2 id="pickModalTitle">Sluttspill</h2>
           </div>
-          <button class="icon-button" id="closePickModalButton" type="button" aria-label="Close public picks">
+          <button class="icon-button" id="closePickModalButton" type="button" aria-label="Lukk offentlige tips">
             ×
           </button>
         </div>
@@ -220,18 +220,18 @@
     <div class="confirm-modal" id="submitConfirmModal" hidden>
       <div class="confirm-card" role="dialog" aria-modal="true" aria-labelledby="submitConfirmTitle">
         <div class="confirm-copy">
-          <span>Public submission</span>
-          <h2 id="submitConfirmTitle">Add picks to leaderboard?</h2>
+          <span>Offentlig innsending</span>
+          <h2 id="submitConfirmTitle">Legg tipsene på resultatlisten?</h2>
           <p>
-            Adding your picks to the database makes your name and bracket visible to all visitors on this website.
+            Når du sender inn tipsene, blir navnet ditt og sluttspillet ditt synlig for alle som besøker siden.
           </p>
         </div>
         <div class="confirm-actions">
           <button class="control-button" id="cancelSubmitConfirmButton" type="button">
-            Cancel
+            Avbryt
           </button>
           <button class="control-button primary" id="confirmSubmitButton" type="button">
-            Add Picks
+            Legg til tips
           </button>
         </div>
       </div>

@@ -33,13 +33,13 @@ function publicBracket(bracket) {
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("allow", "GET");
-    return sendJson(res, 405, { error: "Method not allowed" });
+    return sendJson(res, 405, { error: "Metoden er ikke tillatt" });
   }
 
   if (!hasDatabase()) {
     return sendJson(res, 503, {
-      error: "Database not configured",
-      message: "Connect Neon and set DATABASE_URL to enable the leaderboard.",
+      error: "Database er ikke konfigurert",
+      message: "Koble til Neon og sett DATABASE_URL for å aktivere resultatlisten.",
     });
   }
 
@@ -78,6 +78,6 @@ export default async function handler(req, res) {
     return sendJson(res, 200, { entries, scoring });
   } catch (error) {
     console.error(error);
-    return sendJson(res, 500, { error: "Failed to load leaderboard" });
+    return sendJson(res, 500, { error: "Kunne ikke laste resultatlisten" });
   }
 }

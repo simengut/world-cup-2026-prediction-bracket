@@ -41,33 +41,33 @@ const VALID_PICK_VALUES = new Set(["home", "away"]);
 
 function validateBracket(bracket) {
   if (!bracket || typeof bracket !== "object") {
-    return "Bracket payload is missing.";
+    return "Sluttspilldata mangler.";
   }
 
   if (!Array.isArray(bracket.groups) || bracket.groups.length !== 12) {
-    return "Bracket must include 12 groups.";
+    return "Sluttspillet må inneholde 12 grupper.";
   }
 
   if (!bracket.picks || typeof bracket.picks !== "object") {
-    return "Bracket must include knockout picks.";
+    return "Sluttspillet må inneholde sluttspilltips.";
   }
 
   const selectedThirds = bracket.groups.filter(
     (group) => group?.bestThird,
   ).length;
   if (selectedThirds !== 8) {
-    return "Bracket must include exactly eight best third-place teams.";
+    return "Sluttspillet må ha nøyaktig åtte beste tredjeplasser.";
   }
 
   const missingMatch = REQUIRED_MATCH_IDS.find(
     (matchId) => !VALID_PICK_VALUES.has(bracket.picks[matchId]),
   );
   if (missingMatch) {
-    return `Complete every knockout pick before submitting. Missing match ${missingMatch}.`;
+    return `Fullfør alle sluttspilltips før innsending. Mangler kamp ${missingMatch}.`;
   }
 
   if (!String(bracket.champion || "").trim()) {
-    return "Bracket must include a champion.";
+    return "Sluttspillet må ha en vinner.";
   }
 
   return "";
@@ -76,13 +76,13 @@ function validateBracket(bracket) {
 export default async function handler(req, res) {
   if (req.method !== "POST") {
     res.setHeader("allow", "POST");
-    return sendJson(res, 405, { error: "Method not allowed" });
+    return sendJson(res, 405, { error: "Metoden er ikke tillatt" });
   }
 
   if (!hasDatabase()) {
     return sendJson(res, 503, {
-      error: "Database not configured",
-      message: "Connect Neon and set DATABASE_URL to enable submissions.",
+      error: "Database er ikke konfigurert",
+      message: "Koble til Neon og sett DATABASE_URL for å aktivere innsendinger.",
     });
   }
 
@@ -94,7 +94,7 @@ export default async function handler(req, res) {
     const bracketJson = JSON.stringify(bracket);
 
     if (!displayName) {
-      return sendJson(res, 400, { error: "Name is required." });
+      return sendJson(res, 400, { error: "Navn er påkrevd." });
     }
 
     const bracketError = validateBracket(bracket);
@@ -103,7 +103,7 @@ export default async function handler(req, res) {
     }
 
     if (Buffer.byteLength(bracketJson, "utf8") > MAX_BRACKET_BYTES) {
-      return sendJson(res, 413, { error: "Bracket payload is too large." });
+      return sendJson(res, 413, { error: "Sluttspilldataene er for store." });
     }
 
     await ensureSchema();
@@ -119,6 +119,6 @@ export default async function handler(req, res) {
     return sendJson(res, 201, { submission });
   } catch (error) {
     console.error(error);
-    return sendJson(res, 500, { error: "Failed to submit picks" });
+    return sendJson(res, 500, { error: "Kunne ikke sende inn tips" });
   }
 }

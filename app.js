@@ -2,17 +2,17 @@
   const DATA = window.WC_TEMPLATE_DATA;
   const SCHEDULE_ROWS = window.WC_MATCH_SCHEDULE || [];
   const ROUND_META = [
-    { key: "round32", label: "Round of 32" },
-    { key: "round16", label: "Round of 16" },
-    { key: "quarterfinals", label: "Quarterfinals" },
-    { key: "semifinals", label: "Semifinals" },
-    { key: "final", label: "Final" },
+    { key: "round32", label: "32-delsfinaler" },
+    { key: "round16", label: "Åttedelsfinaler" },
+    { key: "quarterfinals", label: "Kvartfinaler" },
+    { key: "semifinals", label: "Semifinaler" },
+    { key: "final", label: "Finale" },
   ];
   const PUBLIC_ROUND_LABELS = {
-    round16: "Round of 16",
-    quarterfinals: "Quarterfinals",
-    semifinals: "Semifinals",
-    final: "Finalists",
+    round16: "Åttedelsfinaler",
+    quarterfinals: "Kvartfinaler",
+    semifinals: "Semifinaler",
+    final: "Finalister",
   };
   const REQUIRED_MATCH_IDS = Object.values(DATA.rounds)
     .flat()
@@ -81,9 +81,9 @@
     picks: { ...DATA.defaultPicks },
     activeView: "bracket",
     importName: DATA.sourceFile,
-    importStatus: "Workbook",
+    importStatus: "Mal",
     leaderboard: [],
-    leaderboardStatus: "Loading leaderboard",
+    leaderboardStatus: "Laster resultatliste",
     scheduleResults: {},
     submitting: false,
     publicView: null,
@@ -186,7 +186,7 @@
 
       return {
         id,
-        name: String(group.name || `Group ${id}`).slice(0, 40),
+        name: String(group.name || `Gruppe ${id}`).slice(0, 40),
         bestThird: Boolean(group.bestThird),
         teams,
       };
@@ -249,7 +249,7 @@
       state.groups = groups;
       state.picks = picks;
       state.importName = String(draft.importName || DATA.sourceFile).slice(0, 100);
-      state.importStatus = String(draft.importStatus || "Saved draft").slice(0, 40);
+      state.importStatus = String(draft.importStatus || "Lagret utkast").slice(0, 40);
       state.activeView = ["groups", "bracket", "schedule"].includes(
         draft.activeView,
       )
@@ -365,11 +365,11 @@
     const displayName = els.displayNameInput.value.trim();
 
     if (state.publicView) {
-      return { ready: false, message: "Viewing public picks" };
+      return { ready: false, message: "Viser offentlige tips" };
     }
 
     if (state.submitting) {
-      return { ready: false, message: "Submitting..." };
+      return { ready: false, message: "Sender inn..." };
     }
 
     if (selectedThirds !== 8) {
@@ -377,29 +377,34 @@
         ready: false,
         message:
           selectedThirds < 8
-            ? `Select ${8 - selectedThirds} more best thirds`
-            : `Remove ${selectedThirds - 8} best thirds`,
+            ? `Velg ${8 - selectedThirds} flere beste treere`
+            : `Fjern ${selectedThirds - 8} beste treere`,
       };
     }
 
     if (pickCount !== TOTAL_KNOCKOUT_PICKS) {
       return {
         ready: false,
-        message: `Choose ${TOTAL_KNOCKOUT_PICKS - pickCount} more knockout ${
-          TOTAL_KNOCKOUT_PICKS - pickCount === 1 ? "game" : "games"
+        message: `Velg ${TOTAL_KNOCKOUT_PICKS - pickCount} ${
+          TOTAL_KNOCKOUT_PICKS - pickCount === 1
+            ? "sluttspillkamp"
+            : "sluttspillkamper"
         }`,
       };
     }
 
     if (!displayName) {
-      return { ready: false, message: "Enter your name to submit" };
+      return { ready: false, message: "Skriv inn navn for å sende inn" };
     }
 
     if (!backendAvailableHere()) {
-      return { ready: false, message: "Submit from the deployed Vercel site" };
+      return {
+        ready: false,
+        message: "Send inn fra den publiserte Vercel-siden",
+      };
     }
 
-    return { ready: true, message: "Ready to submit" };
+    return { ready: true, message: "Klar til innsending" };
   }
 
   function updateSubmitState() {
@@ -422,8 +427,8 @@
         row: null,
         message:
           selected.size < 8
-            ? `${8 - selected.size} more best thirds needed`
-            : `${selected.size - 8} too many best thirds`,
+            ? `Mangler ${8 - selected.size} beste treere`
+            : `${selected.size - 8} for mange beste treere`,
       };
     }
 
@@ -434,7 +439,7 @@
     );
 
     if (!row) {
-      return { map: {}, row: null, message: "No third-place map found" };
+      return { map: {}, row: null, message: "Fant ingen treer-kombinasjon" };
     }
 
     const map = {};
@@ -442,7 +447,7 @@
       map[header] = row.slots[index];
     });
 
-    return { map, row, message: `Annex option ${row.option}` };
+    return { map, row, message: `Anneksvalg ${row.option}` };
   }
 
   function entrantFromSeed(seed, matchesById) {
@@ -472,7 +477,7 @@
   }
 
   function seedLabel(seed) {
-    if (seed === null || seed === undefined) return "Best 3rd";
+    if (seed === null || seed === undefined) return "Beste treer";
     return typeof seed === "number" ? `W${seed}` : seed;
   }
 
@@ -532,7 +537,7 @@
     const selectedCount = selectedThirdCodes().length;
 
     if (!group.bestThird && selectedCount >= 8) {
-      showToast("Eight best third-place teams are already selected.");
+      showToast("Åtte beste tredjeplasser er allerede valgt.");
       return;
     }
 
@@ -556,12 +561,12 @@
     const selectedThirds = selectedThirdCodes().length;
     const pickCount = completedPickCount();
     const finalMatch = bracket.matchesById["104"];
-    const champion = finalMatch?.winner?.name || "Open";
+    const champion = finalMatch?.winner?.name || "Åpen";
     const metrics = [
-      ["Groups", "12 / 12", "Seeded"],
-      ["Best thirds", `${selectedThirds} / 8`, bracket.assignment.message],
-      ["Knockout", `${pickCount} / ${TOTAL_KNOCKOUT_PICKS}`, "Picks"],
-      ["Champion", champion, "Projected"],
+      ["Grupper", "12 / 12", "Seedet"],
+      ["Beste treere", `${selectedThirds} / 8`, bracket.assignment.message],
+      ["Sluttspill", `${pickCount} / ${TOTAL_KNOCKOUT_PICKS}`, "Tips"],
+      ["Vinner", champion, "Projisert"],
     ];
 
     els.metricsGrid.innerHTML = metrics
@@ -582,7 +587,7 @@
     els.thirdCounter.textContent = `${selected.length} / 8`;
 
     if (!selected.length) {
-      els.thirdList.innerHTML = '<div class="empty-state">None selected</div>';
+      els.thirdList.innerHTML = '<div class="empty-state">Ingen valgt</div>';
       return;
     }
 
@@ -607,7 +612,7 @@
 
     els.leaderboardList.innerHTML = state.leaderboard
       .map((entry, index) => {
-        const champion = entry.champion || "Open";
+        const champion = entry.champion || "Åpen";
         const scoreLabel = entry.max_score
           ? `${Number(entry.score || 0)} / ${Number(entry.max_score)}`
           : Number(entry.score || 0);
@@ -624,13 +629,13 @@
               <span class="score-pill">${escapeHtml(scoreLabel)}</span>
               ${
                 canView
-                  ? `<button class="mini-button" type="button" data-action="view-public-picks" data-entry-id="${escapeHtml(entry.id)}">View</button>`
-                  : '<span class="unavailable-pill">No picks</span>'
+                  ? `<button class="mini-button" type="button" data-action="view-public-picks" data-entry-id="${escapeHtml(entry.id)}">Vis</button>`
+                  : '<span class="unavailable-pill">Ingen tips</span>'
               }
               ${
                 isMine
-                  ? '<span class="mine-pill">You</span>'
-                  : `<button class="mini-button ghost" type="button" data-action="mark-my-picks" data-entry-id="${escapeHtml(entry.id)}">This is me</button>`
+                  ? '<span class="mine-pill">Deg</span>'
+                  : `<button class="mini-button ghost" type="button" data-action="mark-my-picks" data-entry-id="${escapeHtml(entry.id)}">Dette er meg</button>`
               }
             </div>
           </div>
@@ -641,9 +646,9 @@
 
   function formatDateLabel(value) {
     const date = new Date(value);
-    if (Number.isNaN(date.getTime())) return "Submitted";
+    if (Number.isNaN(date.getTime())) return "Sendt inn";
 
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat("nb-NO", {
       month: "short",
       day: "numeric",
       hour: "2-digit",
@@ -682,6 +687,32 @@
     return `${normalizeScheduleName(homeTeam)}::${normalizeScheduleName(awayTeam)}`;
   }
 
+  function displayScheduleStage(stage) {
+    if (/^Group [A-L]$/.test(stage)) return stage.replace("Group", "Gruppe");
+
+    const labels = {
+      "Round of 32": "32-delsfinaler",
+      "Round of 16": "Åttedelsfinaler",
+      Quarterfinal: "Kvartfinale",
+      Semifinal: "Semifinale",
+      "Third-place match": "Bronsefinale",
+      Final: "Finale",
+    };
+    return labels[stage] || stage;
+  }
+
+  function displayScheduleMatch(match) {
+    return String(match || "")
+      .replaceAll(" vs ", " mot ")
+      .replaceAll("Group ", "Gruppe ")
+      .replaceAll(" Winner", "-vinner")
+      .replaceAll(" Second Place", "-toer")
+      .replaceAll(" Third Place", "-treer")
+      .replaceAll("Semifinal winners", "Semifinalevinnere")
+      .replaceAll("Semifinal losers", "Semifinaletapere")
+      .replaceAll("TBD", "Ikke klart");
+  }
+
   function scheduleDate(row) {
     const [year, month, day] = row.date.split("-").map(Number);
     const { hour, minute } = parseScheduleTime(row.timeET);
@@ -707,7 +738,7 @@
   }
 
   function formatScheduleDate(date, options = {}) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat("nb-NO", {
       timeZone: "Europe/Oslo",
       weekday: options.short ? "short" : "long",
       month: "short",
@@ -716,7 +747,7 @@
   }
 
   function formatOsloTime(date) {
-    return new Intl.DateTimeFormat(undefined, {
+    return new Intl.DateTimeFormat("nb-NO", {
       timeZone: "Europe/Oslo",
       hour: "2-digit",
       hourCycle: "h23",
@@ -740,7 +771,7 @@
       .filter((item) => item.team);
 
     if (!selected.length) {
-      return '<div class="empty-state">No best thirds saved</div>';
+      return '<div class="empty-state">Ingen beste treere lagret</div>';
     }
 
     return `
@@ -761,7 +792,7 @@
 
   function renderPublicGroups(groups) {
     if (!groups.length) {
-      return '<div class="empty-state">No group picks saved</div>';
+      return '<div class="empty-state">Ingen gruppetips lagret</div>';
     }
 
     return `
@@ -771,10 +802,10 @@
             (group) => `
               <div class="public-group">
                 <div class="public-group-head">
-                  <h3>Group ${escapeHtml(group.id)}</h3>
+                  <h3>Gruppe ${escapeHtml(group.id)}</h3>
                   ${
                     group.bestThird
-                      ? '<span class="public-third-badge">3rd advances</span>'
+                      ? '<span class="public-third-badge">3. plass videre</span>'
                       : ""
                   }
                 </div>
@@ -819,7 +850,7 @@
                       `,
                     )
                     .join("")
-                : '<div class="empty-state">No picks saved</div>'
+                : '<div class="empty-state">Ingen tips lagret</div>'
             }
           </div>
         `;
@@ -838,7 +869,7 @@
     const picks = normalizeStoredPicks(entry?.bracket?.picks);
 
     if (!entry?.bracket || !groups || !picks) {
-      showToast("Picks are not available for that submission.");
+      showToast("Tips er ikke tilgjengelige for den innsendingen.");
       return;
     }
 
@@ -862,11 +893,11 @@
     state.annexRows = clone(DATA.annexRows);
     state.picks = picks;
     state.activeView = "bracket";
-    state.importName = `${entry.display_name}'s bracket`;
-    state.importStatus = "Public";
+    state.importName = `${entry.display_name} sitt sluttspill`;
+    state.importStatus = "Offentlig";
     state.publicView = {
-      title: `${entry.display_name}'s picks`,
-      detail: `${champion || "Open champion"} · ${Number(entry.score || 0)} / ${Number(entry.max_score || 0)} · ${formatDateLabel(submittedAt)}`,
+      title: `${entry.display_name} sine tips`,
+      detail: `${champion || "Åpen vinner"} · ${Number(entry.score || 0)} / ${Number(entry.max_score || 0)} · ${formatDateLabel(submittedAt)}`,
     };
     render();
     document.querySelector(".workspace")?.scrollIntoView({
@@ -893,7 +924,7 @@
     state.publicView = null;
     state.privateDraft = null;
     render();
-    showToast("Your picks restored.");
+    showToast("Dine tips er gjenopprettet.");
   }
 
   let submitConfirmResolve = null;
@@ -927,7 +958,7 @@
           <article class="group-card" data-group-id="${escapeHtml(group.id)}">
             <div class="group-head">
               <div>
-                <span class="group-kicker">Group</span>
+                <span class="group-kicker">Gruppe</span>
                 <h3>${escapeHtml(group.id)}</h3>
               </div>
               <button
@@ -938,7 +969,7 @@
                 ${bestDisabled ? "disabled" : ""}
                 aria-pressed="${group.bestThird ? "true" : "false"}"
               >
-                3rd
+                3.
               </button>
             </div>
             <div class="team-list">
@@ -956,7 +987,7 @@
                           data-group-id="${escapeHtml(group.id)}"
                           data-team-id="${escapeHtml(team.id)}"
                           ${readonly || team.rank === 1 ? "disabled" : ""}
-                          aria-label="Move ${escapeHtml(team.name)} up"
+                          aria-label="Flytt ${escapeHtml(team.name)} opp"
                         >
                           ↑
                         </button>
@@ -967,7 +998,7 @@
                           data-group-id="${escapeHtml(group.id)}"
                           data-team-id="${escapeHtml(team.id)}"
                           ${readonly || team.rank === 4 ? "disabled" : ""}
-                          aria-label="Move ${escapeHtml(team.name)} down"
+                          aria-label="Flytt ${escapeHtml(team.name)} ned"
                         >
                           ↓
                         </button>
@@ -995,8 +1026,8 @@
 
     els.championStrip.innerHTML = `
       <div class="champion-copy">
-        <span>Projected champion</span>
-        <strong>${escapeHtml(champion?.name || "Open bracket")}</strong>
+        <span>Projisert vinner</span>
+        <strong>${escapeHtml(champion?.name || "Åpent sluttspill")}</strong>
       </div>
       <div class="finalists">
         <span>${teamMarkup(finalistA)}</span>
@@ -1010,7 +1041,7 @@
     const picked = match.pick === side;
     const seed = side === "home" ? match.homeSeed : match.awaySeed;
     const disabled = !entrant || state.publicView;
-    const label = entrant ? entrant.name : "Waiting";
+    const label = entrant ? entrant.name : "Venter";
 
     return `
       <button
@@ -1116,8 +1147,8 @@
                 (match) => `
                   <article class="match-card" data-match-id="${match.id}">
                     <div class="match-meta">
-                      <span>Match ${match.id}</span>
-                      <strong>${escapeHtml(match.winner?.name || "Open")}</strong>
+                      <span>Kamp ${match.id}</span>
+                      <strong>${escapeHtml(match.winner?.name || "Åpen")}</strong>
                     </div>
                     ${renderEntrant(match, "home")}
                     ${renderEntrant(match, "away")}
@@ -1137,10 +1168,10 @@
     const nextIndex = rows.findIndex((row) => row.startsAt >= now);
     const upcomingCount = rows.filter((row) => row.startsAt >= now).length;
 
-    els.scheduleMeta.textContent = `${upcomingCount || 0} upcoming · ${rows.length} total`;
+    els.scheduleMeta.textContent = `${upcomingCount || 0} kommende · ${rows.length} totalt`;
 
     if (!rows.length) {
-      els.scheduleList.innerHTML = '<div class="empty-state">No schedule loaded</div>';
+      els.scheduleList.innerHTML = '<div class="empty-state">Ingen kamper lastet</div>';
       return;
     }
 
@@ -1162,14 +1193,14 @@
             </div>
             <div class="schedule-match-main">
               <div class="schedule-match-top">
-                <span class="soft-badge">${escapeHtml(row.stage)}</span>
-                ${isNext ? '<span class="next-badge">Next</span>' : ""}
+                <span class="soft-badge">${escapeHtml(displayScheduleStage(row.stage))}</span>
+                ${isNext ? '<span class="next-badge">Neste</span>' : ""}
               </div>
-              <strong>${escapeHtml(row.match)}</strong>
+              <strong>${escapeHtml(displayScheduleMatch(row.match))}</strong>
               <span>${escapeHtml(row.venue)}</span>
             </div>
             <div class="schedule-result">
-              ${row.score ? `<strong>${escapeHtml(row.score)}</strong><span>Final</span>` : ""}
+              ${row.score ? `<strong>${escapeHtml(row.score)}</strong><span>Ferdig</span>` : ""}
             </div>
           </article>
         `;
@@ -1179,10 +1210,10 @@
 
   function renderStatus(bracket) {
     const selectedThirds = selectedThirdCodes().length;
-    els.headerMeta.textContent = `${state.importName} · ${selectedThirds}/8 best thirds`;
+    els.headerMeta.textContent = `${state.importName} · ${selectedThirds}/8 beste treere`;
     els.inlineStatus.textContent =
       state.activeView === "schedule"
-        ? `${SCHEDULE_ROWS.length} matches · Oslo time`
+        ? `${SCHEDULE_ROWS.length} kamper · Oslo-tid`
         : bracket.assignment.message;
   }
 
@@ -1255,7 +1286,7 @@
   function importGroups(workbook, warnings) {
     const sheet = workbook.Sheets.Grunnspill;
     if (!sheet) {
-      warnings.push("Missing Grunnspill sheet.");
+      warnings.push("Mangler arket Grunnspill.");
       return clone(DATA.groups);
     }
 
@@ -1291,7 +1322,9 @@
         new Set(rankValues).size === 4;
 
       if (!validRanks) {
-        warnings.push(`Group ${groupId} had invalid ranks; row order was used.`);
+        warnings.push(
+          `Gruppe ${groupId} hadde ugyldige plasseringer; radrekkefølgen ble brukt.`,
+        );
         teams.forEach((team, index) => {
           team.rank = index + 1;
         });
@@ -1301,16 +1334,16 @@
       teams.forEach((team, index) => {
         if (markedRows.get(index) && team.rank === 3) bestThird = true;
         if (markedRows.get(index) && team.rank !== 3) {
-          warnings.push(`Group ${groupId} marked a non-third-place team.`);
+          warnings.push(`Gruppe ${groupId} markerte et lag som ikke var tredjeplass.`);
         }
       });
 
-      groups.push({ id: groupId, name: `Group ${groupId}`, bestThird, teams });
+      groups.push({ id: groupId, name: `Gruppe ${groupId}`, bestThird, teams });
     }
 
     const selected = groups.filter((group) => group.bestThird).length;
     if (selected > 8) {
-      warnings.push("More than eight best third-place teams were marked.");
+      warnings.push("Mer enn åtte beste tredjeplasser var markert.");
     }
 
     return groups;
@@ -1332,7 +1365,7 @@
     }
 
     if (rows.length !== 495) {
-      warnings.push("Annex lookup was incomplete; template lookup was kept.");
+      warnings.push("Anneksoppslaget var ufullstendig; maloppslaget ble beholdt.");
       return clone(DATA.annexRows);
     }
 
@@ -1364,7 +1397,7 @@
 
   async function handleExcelUpload(file) {
     if (!window.XLSX) {
-      showToast("Excel parser is still loading.");
+      showToast("Excel-leseren lastes fortsatt.");
       return;
     }
 
@@ -1375,12 +1408,12 @@
     state.annexRows = importAnnexRows(workbook, warnings);
     state.picks = importPicks(workbook);
     state.importName = file.name;
-    state.importStatus = warnings.length ? "Imported with notes" : "Imported";
+    state.importStatus = warnings.length ? "Importert med merknader" : "Importert";
     render();
     showToast(
       warnings.length
-        ? `${file.name} imported. ${warnings[0]}`
-        : `${file.name} imported.`,
+        ? `${file.name} importert. ${warnings[0]}`
+        : `${file.name} importert.`,
     );
   }
 
@@ -1414,7 +1447,7 @@
     return {
       error:
         response.status === 404
-          ? "Leaderboard backend is not running here."
+          ? "Resultatliste-backenden kjører ikke her."
           : text.slice(0, 160),
     };
   }
@@ -1459,12 +1492,12 @@
   async function loadLeaderboard() {
     if (!backendAvailableHere()) {
       state.leaderboard = [];
-      state.leaderboardStatus = "Leaderboard available after deployment";
+      state.leaderboardStatus = "Resultatliste er tilgjengelig etter publisering";
       renderLeaderboard();
       return;
     }
 
-    state.leaderboardStatus = "Loading leaderboard";
+    state.leaderboardStatus = "Laster resultatliste";
     renderLeaderboard();
 
     try {
@@ -1474,18 +1507,18 @@
       const payload = await readApiResponse(response);
 
       if (!response.ok) {
-        throw new Error(payload.message || payload.error || "Leaderboard unavailable");
+        throw new Error(payload.message || payload.error || "Resultatliste utilgjengelig");
       }
 
       state.leaderboard = payload.entries || [];
       state.leaderboardStatus = state.leaderboard.length
         ? ""
-        : "No submissions yet";
+        : "Ingen innsendinger ennå";
     } catch (error) {
       state.leaderboard = [];
       state.leaderboardStatus =
         error.message === "Failed to fetch"
-          ? "Leaderboard offline"
+          ? "Resultatliste er offline"
           : error.message;
     }
 
@@ -1512,7 +1545,7 @@
       state.scheduleResults = results;
       renderSchedule();
     } catch (error) {
-      console.warn("World Cup results unavailable", error);
+      console.warn("VM-resultater utilgjengelige", error);
     }
   }
 
@@ -1523,24 +1556,24 @@
     const readiness = submissionReadiness();
 
     if (!displayName) {
-      showToast("Enter a name before submitting.");
+      showToast("Skriv inn navn før du sender inn.");
       els.displayNameInput.focus();
       return;
     }
 
     if (!backendAvailableHere()) {
-      showToast("Submit picks from the deployed Vercel site.");
-      els.submitStatus.textContent = "Available after deployment";
+      showToast("Send inn tips fra den publiserte Vercel-siden.");
+      els.submitStatus.textContent = "Tilgjengelig etter publisering";
       return;
     }
 
     if (selectedThirds !== 8) {
-      showToast("Select exactly eight best third-place teams first.");
+      showToast("Velg nøyaktig åtte beste tredjeplasser først.");
       return;
     }
 
     if (pickCount < TOTAL_KNOCKOUT_PICKS) {
-      showToast("Complete every knockout pick before submitting.");
+      showToast("Fullfør alle sluttspilltips før innsending.");
       return;
     }
 
@@ -1567,23 +1600,23 @@
       const payload = await readApiResponse(response);
 
       if (!response.ok) {
-        throw new Error(payload.message || payload.error || "Submission failed");
+        throw new Error(payload.message || payload.error || "Innsending feilet");
       }
 
       if (payload.submission?.id) {
         setMySubmission(payload.submission.id);
       }
-      els.submitStatus.textContent = "Submitted";
-      showToast("Picks submitted.");
+      els.submitStatus.textContent = "Sendt inn";
+      showToast("Tips sendt inn.");
       await loadLeaderboard();
     } catch (error) {
       els.submitStatus.textContent = error.message;
       showToast(error.message);
     } finally {
       state.submitting = false;
-      const submitted = els.submitStatus.textContent === "Submitted";
+      const submitted = els.submitStatus.textContent === "Sendt inn";
       updateSubmitState();
-      if (submitted) els.submitStatus.textContent = "Submitted";
+      if (submitted) els.submitStatus.textContent = "Sendt inn";
     }
   }
 
@@ -1614,7 +1647,7 @@
     if (button.dataset.action === "mark-my-picks") {
       setMySubmission(button.dataset.entryId);
       renderLeaderboard();
-      showToast("Marked as your picks.");
+      showToast("Markert som dine tips.");
     }
   });
 
@@ -1653,7 +1686,7 @@
       await handleExcelUpload(file);
     } catch (error) {
       console.error(error);
-      showToast("Excel import failed.");
+      showToast("Excel-import feilet.");
     } finally {
       event.target.value = "";
     }
@@ -1664,15 +1697,15 @@
     state.annexRows = clone(DATA.annexRows);
     state.picks = { ...DATA.defaultPicks };
     state.importName = DATA.sourceFile;
-    state.importStatus = "Workbook";
+    state.importStatus = "Mal";
     render();
-    showToast("Template picks restored.");
+    showToast("Maltips gjenopprettet.");
   });
 
   els.clearKnockoutButton.addEventListener("click", () => {
     state.picks = {};
     render();
-    showToast("Knockout picks cleared.");
+    showToast("Sluttspilltips tømt.");
   });
 
   els.exportButton.addEventListener("click", exportPicks);
@@ -1708,7 +1741,7 @@
   state.mySubmissionId = loadMySubmissionId();
   const draftRestored = restoreDraft();
   render();
-  if (draftRestored) showToast("Saved picks restored.");
+  if (draftRestored) showToast("Lagrede tips gjenopprettet.");
   loadLeaderboard();
   loadWorldCupResults();
 })();

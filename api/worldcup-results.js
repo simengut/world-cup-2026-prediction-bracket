@@ -41,13 +41,13 @@ function publicMatch(match) {
 export default async function handler(req, res) {
   if (req.method !== "GET") {
     res.setHeader("allow", "GET");
-    return sendJson(res, 405, { error: "Method not allowed" });
+    return sendJson(res, 405, { error: "Metoden er ikke tillatt" });
   }
 
   const token = process.env.FOOTBALL_DATA_API_TOKEN;
   if (!token) {
     return sendJson(res, 503, {
-      error: "Football-data token is not configured",
+      error: "Football-data-token er ikke konfigurert",
     });
   }
 
@@ -64,7 +64,7 @@ export default async function handler(req, res) {
 
     if (!response.ok) {
       return sendJson(res, response.status, {
-        error: payload.message || payload.error || "Football-data request failed",
+        error: payload.message || payload.error || "Football-data-forespørselen feilet",
         rateLimit: limits,
       });
     }
@@ -81,6 +81,6 @@ export default async function handler(req, res) {
     });
   } catch (error) {
     console.error(error);
-    return sendJson(res, 500, { error: "Failed to load World Cup results" });
+    return sendJson(res, 500, { error: "Kunne ikke laste VM-resultater" });
   }
 }
